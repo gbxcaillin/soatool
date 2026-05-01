@@ -1,0 +1,28 @@
+# Render Blueprint — Brightday SOA Completion Agent
+# https://render.com/docs/blueprint-spec
+#
+# NOTE: Render only reads this file when a service is created via
+# "New + → Blueprint" and pointed at the repo. For services created
+# manually through the dashboard, the Start Command and env vars must
+# also be set manually under Settings → Build & Deploy and Settings →
+# Environment.
+
+services:
+  - type: web
+    name: brightday-soa-agent
+    runtime: python
+    plan: starter            # $7/mo — always-on. Use "free" for dev (sleeps after 15 min idle).
+    region: singapore        # Closest Render region to Melbourne. Options: oregon, frankfurt, ohio, singapore, virginia.
+    branch: main
+    pythonVersion: "3.11"
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+    healthCheckPath: /login
+    autoDeploy: true
+    envVars:
+      - key: SECRET_KEY
+        sync: false          # Set in Render dashboard → Environment. Long random string.
+      - key: USERS
+        sync: false          # Format: username1:sha256hash,username2:sha256hash
+      - key: PYTHON_VERSION
+        value: "3.11"
