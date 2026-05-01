@@ -80,11 +80,20 @@ FUND_COLS = [2, 4, 6, 8, 10]
 # FACT FINDER READER
 # ─────────────────────────────────────────────
 
-def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag):
+def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
+                     no_trauma_flag=False, no_salsac_flag=False,
+                     insurance_only_flag=False, scenario=""):
     """
     Read the Fact Finder xlsx and return:
         - data dict  { "{{CODE}}": "value" }
         - conditionals dict  { "DELETE_KEY": True/False }
+
+    UI flags:
+        no_insurance_flag    -> drives {{DeleteIfNoInsuranceAtAll}} and {{DeleteIfNoInsuranceAdvice}}
+        no_trauma_flag       -> drives {{DeleteIfNoScopedTrauma}}
+        no_salsac_flag       -> drives {{DeleteIfNoSalarySacrificeAdvice}}
+        insurance_only_flag  -> drives {{DeleteIfInsuranceOnlyClient}}
+        scenario             -> "1".."6"; keeps {{ScenarioN}} block, deletes the other five
     """
     from python_calamine import CalamineWorkbook
     cal_wb   = CalamineWorkbook.from_filelike(io.BytesIO(xlsx_bytes))
@@ -347,14 +356,18 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag):
         "{{AnnualisedSalarySacrificeAmount}}":   annualised_salary_sacrifice,
         "{{BindingDeathNominee}}":               binding_death_nominee,
         "{{CurrentRiskProfile}}":                current_risk_profile,
-        # Goals — left as raw codes (unmapped)
-        # Table codes — left as raw codes (unmapped)
+        "{{EmploymentStatus}}":                  emp_status,
+        "{{MaritalStatus}}":                     cell(45, 2),
+        # Goals — left as raw codes (adviser-completed)
+        # Table codes — left as raw codes (adviser-completed)
+        # $r1-$r4, $p1-$p4 — adviser-completed (different placeholder syntax, regex ignores them)
     }
 
     # ─────────────────────────────────
     # CONDITIONALS
     # ─────────────────────────────────
     total_balance = sum_funds(94)
+    super_contribution_num = gross_income_num * sgc_pct if gross_income_num else 0
 
     # Row 100: insurance in fund — check all fund columns
     has_any_insurance = any(
@@ -373,14 +386,25 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag):
         "DeleteIfAgeGreaterThan55":              (age is not None and age >= 55),
         "DeleteIfAgeLessThan55":                 (age is not None and age < 55),
         "DeleteIfBalanceBelow500k":              (total_balance < 500_000),
+        "DeleteIfSuperContributionsBelow30k":    (super_contribution_num < 30_000),
         "DeleteIfNoCurrentInsurance":            (not has_any_insurance),
-        "DeleteIfNoInsuranceAtAll":              no_insurance_flag,   # UI checkbox
+        "DeleteIfNoInsuranceAtAll":              no_insurance_flag,        # legacy UI checkbox
+        "DeleteIfNoInsuranceAdvice":             no_insurance_flag,        # new spec name, same checkbox
+        "DeleteIfNoScopedTrauma":                no_trauma_flag,           # UI checkbox
+        "DeleteIfNoSalarySacrificeAdvice":       no_salsac_flag,           # UI checkbox
+        "DeleteIfInsuranceOnlyClient":           insurance_only_flag,      # UI checkbox
         "DeleteIfNoScopedInsurance":             False,  # unmapped — never delete
-        "DeleteIfNoScopedTrauma":                False,  # unmapped — never delete
         "DeleteIfNoTrauma":                      False,  # unmapped — never delete
-        "DeleteIfPersonalDeductibleContributions": False,  # unmapped — never delete
+        "DeleteIfPersonalDeductibleContributions": False,  # unmapped — needs FF row spec
+        "DeleteIfNoDebts":                       False,  # spec: ignore and leave code
+        "DeleteIfClientHasDebts":                False,  # spec: ignore and leave code
         "DeleteifNoCurrentUnderwrittenInsurance": (not has_underwritten),
     }
+
+    # Scenarios 1–6: keep selected, delete the other five.
+    # If no scenario selected, all six are kept (markers stripped).
+    for n in range(1, 7):
+        conditionals[f"DeleteScenario{n}"] = (scenario != "" and scenario != str(n))
 
     return data, conditionals
 
@@ -407,11 +431,14 @@ UNMAPPED_CODES = {
     "{{Make personal deductible contributions/Salary sacrifice}}",
     "{{DeleteIfNoScopedInsurance}}",
     "{{EndDeleteIfNoScopedInsurance}}",
-    "{{DeleteIfNoScopedTrauma}}",
     "{{DeleteIfNoTrauma}}",
     "{{EndDeleteIfNoTrauma}}",
     "{{DeleteIfPersonalDeductibleContributions}}",
     "{{EndDeleteIfPersonalDeductibleContributions}}",
+    "{{DeleteIfNoDebts}}",
+    "{{EndDeleteIfNoDebts}}",
+    "{{DeleteIfClientHasDebts}}",
+    "{{EndDeleteIfClientHasDebts}}",
     "{{CurrentInsuer}}",
     "{{SalarySacrificeAmount}}",
     "{{SalarySacrificeFrequency}}",
@@ -431,8 +458,21 @@ CONDITIONAL_PAIRS = [
     ("{{DeleteIfAgeGreaterThan55}}",              "{{EndDeleteIfAgeGreaterThan55}}",              "DeleteIfAgeGreaterThan55"),
     ("{{DeleteIfAgeLessThan55}}",                 "{{EndDeleteIfAgeLessThan55}}",                 "DeleteIfAgeLessThan55"),
     ("{{DeleteIfBalanceBelow500k}}",              "{{EndDeleteIfBalanceBelow500k}}",              "DeleteIfBalanceBelow500k"),
+    ("{{DeleteIfSuperContributionsBelow30k}}",    "{{EndDeleteIfSuperContributionsBelow30k}}",    "DeleteIfSuperContributionsBelow30k"),
     ("{{DeleteIfNoCurrentInsurance}}",            "{{EndDeleteIfNoCurrentInsurance}}",            "DeleteIfNoCurrentInsurance"),
     ("{{DeleteifNoCurrentUnderwrittenInsurance}}","{{EndDeleteifNoCurrentUnderwrittenInsurance}}","DeleteifNoCurrentUnderwrittenInsurance"),
+    # New spec — driven by UI checkboxes
+    ("{{DeleteIfNoInsuranceAdvice}}",             "{{EndDeleteIfNoInsuranceAdvice}}",             "DeleteIfNoInsuranceAdvice"),
+    ("{{DeleteIfNoScopedTrauma}}",                "{{EndDeleteIfNoScopedTrauma}}",                "DeleteIfNoScopedTrauma"),
+    ("{{DeleteIfNoSalarySacrificeAdvice}}",       "{{EndDeleteIfNoSalarySacrificeAdvice}}",       "DeleteIfNoSalarySacrificeAdvice"),
+    ("{{DeleteIfInsuranceOnlyClient}}",           "{{EndDeleteIfInsuranceOnlyClient}}",           "DeleteIfInsuranceOnlyClient"),
+    # Scenario 1–6 — adviser picks one in the UI; the other five are deleted
+    ("{{Scenario1}}", "{{EndScenario1}}", "DeleteScenario1"),
+    ("{{Scenario2}}", "{{EndScenario2}}", "DeleteScenario2"),
+    ("{{Scenario3}}", "{{EndScenario3}}", "DeleteScenario3"),
+    ("{{Scenario4}}", "{{EndScenario4}}", "DeleteScenario4"),
+    ("{{Scenario5}}", "{{EndScenario5}}", "DeleteScenario5"),
+    ("{{Scenario6}}", "{{EndScenario6}}", "DeleteScenario6"),
 ]
 
 # For DeleteIfNoInsuranceAtAll — single tag (no end tag), marks start of section to delete
@@ -867,17 +907,31 @@ def process():
         if "soa_template" not in request.files:
             return jsonify({"error": "Missing SOA Template file"}), 400
 
-        risk_profile = request.form.get("risk_profile", "").strip()
-        no_insurance = request.form.get("no_insurance", "false").lower() == "true"
+        risk_profile   = request.form.get("risk_profile", "").strip()
+        scenario       = request.form.get("scenario", "").strip()
+        no_insurance   = request.form.get("no_insurance", "false").lower() == "true"
+        no_trauma      = request.form.get("no_trauma", "false").lower() == "true"
+        no_salsac      = request.form.get("no_salsac", "false").lower() == "true"
+        insurance_only = request.form.get("insurance_only", "false").lower() == "true"
 
         if not risk_profile:
             return jsonify({"error": "Risk profile must be selected"}), 400
+        if not scenario:
+            return jsonify({"error": "Scenario must be selected"}), 400
+        if scenario not in {"1", "2", "3", "4", "5", "6"}:
+            return jsonify({"error": "Scenario must be 1-6"}), 400
 
         ff_bytes       = request.files["fact_finder"].read()
         template_bytes = request.files["soa_template"].read()
 
         # Read fact finder then free its bytes
-        data, conditionals = read_fact_finder(ff_bytes, risk_profile, no_insurance)
+        data, conditionals = read_fact_finder(
+            ff_bytes, risk_profile, no_insurance,
+            no_trauma_flag=no_trauma,
+            no_salsac_flag=no_salsac,
+            insurance_only_flag=insurance_only,
+            scenario=scenario,
+        )
         del ff_bytes
 
         # Process SOA (template_bytes freed inside process_soa)

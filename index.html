@@ -527,7 +527,7 @@
 
       <div class="option-group">
         <div class="option-label">Risk Profile <span>*</span></div>
-        <select class="styled-select" id="risk-profile" onchange="onRiskChange(this)">
+        <select class="styled-select" id="risk-profile" onchange="onSelectChange(this)">
           <option value="">— Select risk profile —</option>
           <option value="High Growth">High Growth</option>
           <option value="Growth">Growth</option>
@@ -539,12 +539,60 @@
       </div>
 
       <div class="option-group">
-        <div class="option-label">Client Insurance Status</div>
-        <div class="checkbox-wrap" id="no-insurance-wrap" onclick="toggleCheckbox()">
+        <div class="option-label">Insurance Scenario <span>*</span></div>
+        <select class="styled-select" id="scenario" onchange="onSelectChange(this)">
+          <option value="">— Select scenario —</option>
+          <option value="1">1 — Has group insurance, wants underwritten insurance</option>
+          <option value="2">2 — Has underwritten insurance, wants new underwritten insurance</option>
+          <option value="3">3 — Has underwritten insurance, wants to maintain underwritten insurance</option>
+          <option value="4">4 — No insurance, wants underwritten insurance</option>
+          <option value="5">5 — No insurance, doesn't want insurance</option>
+          <option value="6">6 — Has group insurance, doesn't want new insurance</option>
+        </select>
+        <div style="font-family:'General Sans',sans-serif;font-size:11px;color:var(--white-dim);margin-top:4px;">Required — keeps the matching scenario block, deletes the others</div>
+      </div>
+
+    </div>
+
+    <div class="options-title" style="margin-top:28px;">Section Toggles</div>
+    <div class="options-grid">
+
+      <div class="option-group">
+        <div class="checkbox-wrap" id="no-insurance-wrap" data-flag="no_insurance" onclick="toggleCheckbox(this)">
           <div class="checkbox-box"><span class="checkbox-mark">✓</span></div>
           <div class="checkbox-text">
-            <strong style="display:block;font-size:11px;color:inherit;margin-bottom:2px;font-weight:600;">No Insurance</strong>
+            <strong style="display:block;font-size:11px;color:inherit;margin-bottom:2px;font-weight:600;">No Insurance Advice</strong>
             Remove the no-insurance section from the final SOA
+          </div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <div class="checkbox-wrap" id="no-trauma-wrap" data-flag="no_trauma" onclick="toggleCheckbox(this)">
+          <div class="checkbox-box"><span class="checkbox-mark">✓</span></div>
+          <div class="checkbox-text">
+            <strong style="display:block;font-size:11px;color:inherit;margin-bottom:2px;font-weight:600;">No Trauma Advice</strong>
+            Remove scoped-trauma sections from the SOA
+          </div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <div class="checkbox-wrap" id="no-salsac-wrap" data-flag="no_salsac" onclick="toggleCheckbox(this)">
+          <div class="checkbox-box"><span class="checkbox-mark">✓</span></div>
+          <div class="checkbox-text">
+            <strong style="display:block;font-size:11px;color:inherit;margin-bottom:2px;font-weight:600;">No Salary Sacrifice</strong>
+            Remove salary-sacrifice advice sections
+          </div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <div class="checkbox-wrap" id="insurance-only-wrap" data-flag="insurance_only" onclick="toggleCheckbox(this)">
+          <div class="checkbox-box"><span class="checkbox-mark">✓</span></div>
+          <div class="checkbox-text">
+            <strong style="display:block;font-size:11px;color:inherit;margin-bottom:2px;font-weight:600;">Insurance-Only Client</strong>
+            Remove non-insurance content from the SOA
           </div>
         </div>
       </div>
@@ -589,7 +637,7 @@
 
 <script>
   const files = { ff: null, soa: null };
-  let noInsurance = false;
+  const flags = { no_insurance: false, no_trauma: false, no_salsac: false, insurance_only: false };
 
   // ── File handling ──
   function triggerUpload(key) {
@@ -625,19 +673,21 @@
   }
 
   // ── Options ──
-  function onRiskChange(sel) {
+  function onSelectChange(sel) {
     sel.classList.toggle('has-value', !!sel.value);
     checkReady();
   }
-  function toggleCheckbox() {
-    noInsurance = !noInsurance;
-    document.getElementById('no-insurance-wrap').classList.toggle('active', noInsurance);
+  function toggleCheckbox(el) {
+    const flag = el.dataset.flag;
+    flags[flag] = !flags[flag];
+    el.classList.toggle('active', flags[flag]);
   }
 
   // ── Validation ──
   function checkReady() {
     const risk = document.getElementById('risk-profile').value;
-    const ready = files.ff && files.soa && risk;
+    const scenario = document.getElementById('scenario').value;
+    const ready = files.ff && files.soa && risk && scenario;
     document.getElementById('btn-run').disabled = !ready;
     if (files.ff && files.soa) setPipStep(2, 'active');
     if (ready) setPipStep(2, 'done');
@@ -694,7 +744,11 @@
     formData.append('fact_finder', files.ff);
     formData.append('soa_template', files.soa);
     formData.append('risk_profile', document.getElementById('risk-profile').value);
-    formData.append('no_insurance', noInsurance ? 'true' : 'false');
+    formData.append('scenario', document.getElementById('scenario').value);
+    formData.append('no_insurance', flags.no_insurance ? 'true' : 'false');
+    formData.append('no_trauma', flags.no_trauma ? 'true' : 'false');
+    formData.append('no_salsac', flags.no_salsac ? 'true' : 'false');
+    formData.append('insurance_only', flags.insurance_only ? 'true' : 'false');
 
     try {
       const response = await fetch('/process', { method: 'POST', body: formData });
