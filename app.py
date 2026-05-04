@@ -109,12 +109,16 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
             cell_data[(r_idx, c_idx)] = val
 
     def cell(row, col):
-        """Return cleaned string value from a cell, or '' if empty/zero placeholder."""
+        """Return cleaned string value from a cell, or '' if empty/zero placeholder.
+        Per spec: a numeric 0 (int or float) is treated as empty."""
         v = cell_data.get((row, col))
         if v is None:
             return ""
+        # Numeric zero -> empty (covers calamine returning 0.0 for blank-looking cells)
+        if isinstance(v, (int, float)) and not isinstance(v, bool) and float(v) == 0:
+            return ""
         s = str(v).strip()
-        if s in ("0", "00:00:00", "#REF!", "None"):
+        if s in ("", "0", "0.0", "00:00:00", "#REF!", "None"):
             return ""
         return s
 
@@ -137,11 +141,17 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
         return total
 
     def currency(row, col):
+        """Currency-format a cell value. Returns '' for empty cells AND numeric 0."""
         v = cell_data.get((row, col))
-        try:
-            return f"${float(str(v).replace(',', '').replace('$', '')):,.0f}"
-        except Exception:
+        if v is None:
             return ""
+        try:
+            n = float(str(v).replace(',', '').replace('$', ''))
+        except (ValueError, TypeError):
+            return ""
+        if n == 0:
+            return ""
+        return f"${n:,.0f}"
 
     def currency_sum(row):
         s = sum_funds(row)
@@ -169,6 +179,20 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
         except Exception:
             return None
 
+    def format_au_phone(raw):
+        """Format an Australian phone number as '0XXX XXX XXX'.
+        Handles inputs with spaces, dashes, +61 prefix, or already-formatted.
+        Returns the original string if it doesn't look like a 10-digit AU number."""
+        if not raw:
+            return ""
+        digits = "".join(c for c in str(raw) if c.isdigit())
+        # Convert +61... or 61... (11 digits) to 0...
+        if len(digits) == 11 and digits.startswith("61"):
+            digits = "0" + digits[2:]
+        if len(digits) == 10 and digits.startswith("0"):
+            return f"{digits[:4]} {digits[4:7]} {digits[7:]}"
+        return str(raw).strip()
+
     def format_date(row, col=2):
         v = cell_data.get((row, col))
         if not v:
@@ -183,13 +207,13 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
     # ── Personal Details ──
     title       = cell(10, 2)
     first_name  = cell(11, 2)
-    middle_name = cell(12, 2)
     last_name   = cell(13, 2)
-    full_name_parts = [p for p in [first_name, middle_name, last_name] if p]
+    # Per spec: ClientFullName = first + last only (middle name skipped)
+    full_name_parts = [p for p in [first_name, last_name] if p]
     full_name   = " ".join(full_name_parts)
     dob_str     = format_date(15, 2)
     age         = age_from_dob(15, 2)
-    phone       = cell(16, 2)
+    phone       = format_au_phone(cell(16, 2))
     email       = cell(17, 2)
     address_parts = [p for p in [cell(18,2), cell(19,2), cell(20,2), cell(21,2)] if p]
     address     = ", ".join(address_parts)
@@ -223,9 +247,11 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
         annualised_salary_sacrifice = ""
 
     # ── Retirement Age ──
+    # Per spec: default to B8; use B9 only if B9 is non-empty AND differs from B8.
+    # cell() returns "" for both blank and numeric 0, so the simple check covers both.
     ret_age_1 = cell(8, 2)
     ret_age_2 = cell(9, 2)
-    retirement_age = ret_age_2 if ret_age_2 else ret_age_1
+    retirement_age = ret_age_2 if (ret_age_2 and ret_age_2 != ret_age_1) else ret_age_1
 
     # ── Spouse ──
     spouse_dob  = format_date(47, 2)
@@ -301,11 +327,9 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
     premiums   = insurance_across(107)
 
     # ── Binding Death Nominee ──
-    nominee_names = []
-    for c in [2, 4, 6, 8, 10]:
-        v = cell_data.get((62, c))
-        if v and str(v).strip() not in ("0","","None"):
-            nominee_names.append(str(v).strip())
+    # Per spec: read from row 63 across fund columns (was row 62).
+    # cell() now treats numeric 0 / blank as empty so zero-cells are skipped.
+    nominee_names = [cell(63, c) for c in FUND_COLS if cell(63, c)]
     binding_death_nominee = ", ".join(nominee_names) if nominee_names else "N/A"
 
     # ── Current Date ──
