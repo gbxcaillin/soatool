@@ -249,9 +249,17 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
     # ── Retirement Age ──
     # Per spec: default to B8; use B9 only if B9 is non-empty AND differs from B8.
     # cell() returns "" for both blank and numeric 0, so the simple check covers both.
+    # Then strip any trailing '.0' (calamine returns numeric ages as floats).
+    def _whole_num(s):
+        try:
+            n = float(s)
+            return str(int(n)) if n == int(n) else s
+        except (ValueError, TypeError):
+            return s
     ret_age_1 = cell(8, 2)
     ret_age_2 = cell(9, 2)
     retirement_age = ret_age_2 if (ret_age_2 and ret_age_2 != ret_age_1) else ret_age_1
+    retirement_age = _whole_num(retirement_age) if retirement_age else retirement_age
 
     # ── Spouse ──
     spouse_dob  = format_date(47, 2)
@@ -329,8 +337,17 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
     # ── Binding Death Nominee ──
     # Per spec: read from row 63 across fund columns (was row 62).
     # cell() now treats numeric 0 / blank as empty so zero-cells are skipped.
+    # Joining: 'N/A' if none, single name as-is, 'A and B' if exactly 2,
+    # comma-separated for 3+.
     nominee_names = [cell(63, c) for c in FUND_COLS if cell(63, c)]
-    binding_death_nominee = ", ".join(nominee_names) if nominee_names else "N/A"
+    if not nominee_names:
+        binding_death_nominee = "N/A"
+    elif len(nominee_names) == 1:
+        binding_death_nominee = nominee_names[0]
+    elif len(nominee_names) == 2:
+        binding_death_nominee = " and ".join(nominee_names)
+    else:
+        binding_death_nominee = ", ".join(nominee_names)
 
     # ── Current Date ──
     current_date = date.today().strftime("%d %B %Y")
@@ -420,10 +437,11 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
         "DeleteIfInsuranceOnlyClient":           insurance_only_flag,      # UI checkbox
         # Per Code Map: delete the no-scoped-insurance block when adviser picks scenario 5 or 6
         "DeleteIfNoScopedInsurance":             (scenario in {"5", "6"}),
-        "DeleteIfNoTrauma":                      False,  # unmapped — never delete
-        # Per Code Map: delete the personal-deductible-contributions block when both
-        # B35 (salary sacrifice) AND B36 are non-empty / non-zero (cell() treats 0 as empty)
-        "DeleteIfPersonalDeductibleContributions": bool(cell(35, 2) and cell(36, 2)),
+        "DeleteIfNoTrauma":                      no_trauma_flag,           # alias of NoScopedTrauma
+        # Per Code Map v2: delete the personal-deductible-contributions block when both
+        # B35 (salary sacrifice) AND B36 are EMPTY / zero. cell() treats 0 as empty,
+        # so empty-string checks cover both blank and numeric-zero cells.
+        "DeleteIfPersonalDeductibleContributions": (not cell(35, 2)) and (not cell(36, 2)),
         # Per Code Map: total liabilities = B74 + B77 + B81 (computed above as total_liabilities)
         "DeleteIfNoDebts":                       (total_liabilities == 0),
         "DeleteIfClientHasDebts":                (total_liabilities > 0),
@@ -458,8 +476,6 @@ UNMAPPED_CODES = {
     "{{Tbl_SalarySacrifice}}",
     "{{tbl_CurrentSuperFundsRiskProfilePerformance}}",
     "{{Make personal deductible contributions/Salary sacrifice}}",
-    "{{DeleteIfNoTrauma}}",
-    "{{EndDeleteIfNoTrauma}}",
     "{{CurrentInsuer}}",
     "{{SalarySacrificeAmount}}",
     "{{SalarySacrificeFrequency}}",
@@ -485,6 +501,7 @@ CONDITIONAL_PAIRS = [
     # New spec — driven by UI checkboxes
     ("{{DeleteIfNoInsuranceAdvice}}",             "{{EndDeleteIfNoInsuranceAdvice}}",             "DeleteIfNoInsuranceAdvice"),
     ("{{DeleteIfNoScopedTrauma}}",                "{{EndDeleteIfNoScopedTrauma}}",                "DeleteIfNoScopedTrauma"),
+    ("{{DeleteIfNoTrauma}}",                      "{{EndDeleteIfNoTrauma}}",                      "DeleteIfNoTrauma"),
     ("{{DeleteIfNoSalarySacrificeAdvice}}",       "{{EndDeleteIfNoSalarySacrificeAdvice}}",       "DeleteIfNoSalarySacrificeAdvice"),
     ("{{DeleteIfInsuranceOnlyClient}}",           "{{EndDeleteIfInsuranceOnlyClient}}",           "DeleteIfInsuranceOnlyClient"),
     # Auto from FF / scenario selection
