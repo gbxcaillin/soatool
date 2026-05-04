@@ -345,6 +345,7 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
         "{{Title}}":                             title,
         "{{ClientFullName}}":                    full_name,
         "{{ClientFirstName}}":                   first_name,
+        "{{ClientLastName}}":                    last_name,
         "{{ClientDOB}}":                         dob_str,
         "{{ClientAddress}}":                     address,
         "{{ClientPhone}}":                       phone,
@@ -417,11 +418,15 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
         "DeleteIfNoScopedTrauma":                no_trauma_flag,           # UI checkbox
         "DeleteIfNoSalarySacrificeAdvice":       no_salsac_flag,           # UI checkbox
         "DeleteIfInsuranceOnlyClient":           insurance_only_flag,      # UI checkbox
-        "DeleteIfNoScopedInsurance":             False,  # unmapped — never delete
+        # Per Code Map: delete the no-scoped-insurance block when adviser picks scenario 5 or 6
+        "DeleteIfNoScopedInsurance":             (scenario in {"5", "6"}),
         "DeleteIfNoTrauma":                      False,  # unmapped — never delete
-        "DeleteIfPersonalDeductibleContributions": False,  # unmapped — needs FF row spec
-        "DeleteIfNoDebts":                       False,  # spec: ignore and leave code
-        "DeleteIfClientHasDebts":                False,  # spec: ignore and leave code
+        # Per Code Map: delete the personal-deductible-contributions block when both
+        # B35 (salary sacrifice) AND B36 are non-empty / non-zero (cell() treats 0 as empty)
+        "DeleteIfPersonalDeductibleContributions": bool(cell(35, 2) and cell(36, 2)),
+        # Per Code Map: total liabilities = B74 + B77 + B81 (computed above as total_liabilities)
+        "DeleteIfNoDebts":                       (total_liabilities == 0),
+        "DeleteIfClientHasDebts":                (total_liabilities > 0),
         "DeleteifNoCurrentUnderwrittenInsurance": (not has_underwritten),
     }
 
@@ -444,8 +449,8 @@ UNMAPPED_CODES = {
     "{{OtherAsset2}}",
     "{{OtherAsset2Value}}",
     "{{PersonalLoan2Value}}",
-    "{{****PersonalLoan1}}",
-    "{{****PersonalLoan2}}",
+    "{{PersonalLoan1}}",
+    "{{PersonalLoan2}}",
     "{{NeedsAnalysisLifeInsurance}}",
     "{{NeedsAnalysisTPD}}",
     "{{NeedsAnalysisIP}}",
@@ -453,16 +458,8 @@ UNMAPPED_CODES = {
     "{{Tbl_SalarySacrifice}}",
     "{{tbl_CurrentSuperFundsRiskProfilePerformance}}",
     "{{Make personal deductible contributions/Salary sacrifice}}",
-    "{{DeleteIfNoScopedInsurance}}",
-    "{{EndDeleteIfNoScopedInsurance}}",
     "{{DeleteIfNoTrauma}}",
     "{{EndDeleteIfNoTrauma}}",
-    "{{DeleteIfPersonalDeductibleContributions}}",
-    "{{EndDeleteIfPersonalDeductibleContributions}}",
-    "{{DeleteIfNoDebts}}",
-    "{{EndDeleteIfNoDebts}}",
-    "{{DeleteIfClientHasDebts}}",
-    "{{EndDeleteIfClientHasDebts}}",
     "{{CurrentInsuer}}",
     "{{SalarySacrificeAmount}}",
     "{{SalarySacrificeFrequency}}",
@@ -490,6 +487,11 @@ CONDITIONAL_PAIRS = [
     ("{{DeleteIfNoScopedTrauma}}",                "{{EndDeleteIfNoScopedTrauma}}",                "DeleteIfNoScopedTrauma"),
     ("{{DeleteIfNoSalarySacrificeAdvice}}",       "{{EndDeleteIfNoSalarySacrificeAdvice}}",       "DeleteIfNoSalarySacrificeAdvice"),
     ("{{DeleteIfInsuranceOnlyClient}}",           "{{EndDeleteIfInsuranceOnlyClient}}",           "DeleteIfInsuranceOnlyClient"),
+    # Auto from FF / scenario selection
+    ("{{DeleteIfNoScopedInsurance}}",             "{{EndDeleteIfNoScopedInsurance}}",             "DeleteIfNoScopedInsurance"),
+    ("{{DeleteIfNoDebts}}",                       "{{EndDeleteIfNoDebts}}",                       "DeleteIfNoDebts"),
+    ("{{DeleteIfClientHasDebts}}",                "{{EndDeleteIfClientHasDebts}}",                "DeleteIfClientHasDebts"),
+    ("{{DeleteIfPersonalDeductibleContributions}}","{{EndDeleteIfPersonalDeductibleContributions}}","DeleteIfPersonalDeductibleContributions"),
     # Scenario 1–6 — adviser picks one in the UI; the other five are deleted
     ("{{Scenario1}}", "{{EndScenario1}}", "DeleteScenario1"),
     ("{{Scenario2}}", "{{EndScenario2}}", "DeleteScenario2"),
