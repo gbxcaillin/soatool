@@ -745,105 +745,162 @@ LOGIN_HTML = """<!DOCTYPE html>
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@300,400,500,600,700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --space-cadet: #123559;
-    --space-cadet-mid: #1a4474;
-    --space-cadet-deep: #0c243d;
-    --raspberry: #F50D74;
-    --raspberry-light: #ff4593;
-    --rose-garnet: #990A4E;
-    --white: #FFFFFF;
-    --white-dim: #B8C2D0;
-    --red: #e84040;
-    --border-soft: rgba(255,255,255,0.10);
+    --navy:        #123559;
+    --navy-deep:   #0C243D;
+    --raspberry:   #F50D74;
+    --raspberry-light: #FF4593;
+    --bg:          #FFFFFF;
+    --surface:     #FFFFFF;
+    --surface-soft:#F7F8FA;
+    --text:        #0E2640;
+    --text-muted:  #5C6B7E;
+    --text-soft:   #8A95A4;
+    --border:      #E5E9EF;
+    --border-strong:#CBD2DB;
+    --red:         #DA2929;
+    --red-soft:    #FCEEEE;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
   body {
-    background: var(--space-cadet); color: var(--white);
-    font-family: 'General Sans', 'Ubuntu', system-ui, sans-serif; font-weight: 400;
-    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'General Sans', 'Ubuntu', system-ui, sans-serif;
+    font-weight: 400;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
   }
   body::before {
-    content: ''; position: fixed; inset: 0;
-    background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-    background-size: 48px 48px; pointer-events: none;
+    content: ''; position: fixed; top: -180px; right: -180px;
+    width: 520px; height: 520px;
+    background: radial-gradient(circle, rgba(245,13,116,0.10) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
   }
   body::after {
-    content: ''; position: fixed; top: -160px; right: -160px;
+    content: ''; position: fixed; bottom: -200px; left: -200px;
     width: 520px; height: 520px;
-    background: radial-gradient(circle, rgba(245,13,116,0.18) 0%, transparent 70%);
-    pointer-events: none;
+    background: radial-gradient(circle, rgba(18,53,89,0.06) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
   }
-  .card {
-    position: relative; z-index: 1;
-    background: var(--space-cadet-mid); border: 1px solid var(--border-soft);
-    border-radius: 16px;
-    padding: 48px 44px; width: 100%; max-width: 440px;
-    animation: fadeUp 0.6s ease both;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  .site-header {
+    background: var(--navy);
+    border-bottom: 3px solid var(--raspberry);
+    z-index: 1; position: relative;
   }
-  .logo-area { display: flex; align-items: center; gap: 14px; margin-bottom: 40px; }
+  .header-inner {
+    max-width: 1080px; margin: 0 auto;
+    padding: 18px 32px;
+    display: flex; align-items: center; gap: 14px;
+  }
   .logo-mark {
-    width: 44px; height: 44px;
+    width: 38px; height: 38px;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
   .logo-mark svg { width: 100%; height: 100%; display: block; }
-  .logo-text .brand {
-    font-family: 'Ubuntu', sans-serif; font-size: 24px; font-weight: 700;
-    color: var(--white); letter-spacing: -0.5px; line-height: 1; display: block;
+  .header-text { display: flex; flex-direction: column; line-height: 1; }
+  .header-text .brand {
+    font-family: 'Ubuntu', sans-serif; font-size: 22px; font-weight: 700;
+    color: #FFFFFF; letter-spacing: -0.5px;
   }
-  .logo-text .sub {
+  .header-text .sub {
     font-family: 'General Sans', sans-serif;
-    font-size: 10px; color: var(--raspberry); letter-spacing: 2.2px; font-weight: 500;
-    text-transform: uppercase; margin-top: 5px; display: block;
+    font-size: 10px; color: var(--raspberry-light); letter-spacing: 2.2px; font-weight: 500;
+    text-transform: uppercase; margin-top: 5px;
+  }
+
+  .login-wrap {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    padding: 48px 24px;
+    position: relative; z-index: 1;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 44px 40px;
+    width: 100%; max-width: 420px;
+    animation: fadeUp 0.6s ease both;
+    box-shadow: 0 12px 40px rgba(14,38,64,0.08);
   }
   h1 {
-    font-family: 'Ubuntu', sans-serif; font-size: 30px; font-weight: 700;
+    font-family: 'Ubuntu', sans-serif; font-size: 28px; font-weight: 700;
+    color: var(--navy);
     line-height: 1.1; margin-bottom: 8px; letter-spacing: -0.6px;
   }
   h1 em { font-style: normal; color: var(--raspberry); }
   .subtitle {
     font-family: 'General Sans', sans-serif;
-    font-size: 13px; color: var(--white-dim); margin-bottom: 36px; line-height: 1.6;
+    font-size: 13px; color: var(--text-muted); margin-bottom: 32px; line-height: 1.6;
   }
-  .field { margin-bottom: 20px; }
+  .field { margin-bottom: 18px; }
   .field label {
     font-family: 'General Sans', sans-serif;
     display: block; font-size: 10px; font-weight: 600;
-    letter-spacing: 2px; text-transform: uppercase; color: var(--white-dim); margin-bottom: 8px;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 6px;
   }
   .field input {
-    width: 100%; background: var(--space-cadet-deep); border: 1px solid var(--border-soft);
-    color: var(--white); font-family: 'General Sans', sans-serif; font-size: 13px;
-    padding: 12px 14px; outline: none; transition: border-color 0.2s;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'General Sans', sans-serif; font-size: 13px;
+    padding: 12px 14px; outline: none;
     border-radius: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
-  .field input:focus { border-color: var(--raspberry); }
+  .field input:hover { border-color: var(--border-strong); }
+  .field input:focus { border-color: var(--raspberry); box-shadow: 0 0 0 3px rgba(245,13,116,0.10); }
   .btn-login {
-    width: 100%; background: var(--raspberry); color: var(--white); border: none;
-    padding: 14px; font-family: 'Ubuntu', sans-serif; font-size: 11px;
+    width: 100%;
+    background: var(--raspberry); color: #FFFFFF; border: none;
+    padding: 14px;
+    font-family: 'Ubuntu', sans-serif; font-size: 11px;
     font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
-    cursor: pointer; margin-top: 8px; transition: background 0.2s;
+    cursor: pointer; margin-top: 12px;
     border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(245,13,116,0.30);
+    transition: background 0.2s, box-shadow 0.2s;
   }
-  .btn-login:hover { background: var(--raspberry-light); }
+  .btn-login:hover { background: var(--raspberry-light); box-shadow: 0 6px 18px rgba(245,13,116,0.36); }
   .error {
-    background: rgba(232,64,64,0.10); border: 1px solid rgba(232,64,64,0.35);
-    color: var(--red); font-size: 12px; padding: 10px 14px; margin-bottom: 20px;
+    background: var(--red-soft);
+    border: 1px solid rgba(218,41,41,0.30);
+    color: var(--red);
+    font-size: 12px; padding: 10px 14px; margin-bottom: 18px;
     border-radius: 8px;
     font-family: 'General Sans', sans-serif;
   }
   .footer-note {
     font-family: 'General Sans', sans-serif;
-    font-size: 10px; color: var(--white-dim); opacity: 0.6;
+    font-size: 10px; color: var(--text-soft);
     margin-top: 28px; text-align: center; letter-spacing: 0.5px;
   }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .site-footer {
+    background: var(--navy-deep);
+    color: rgba(245,247,250,0.72);
+    padding: 18px 32px;
+    text-align: center;
+    z-index: 1; position: relative;
+  }
+  .site-footer .footer-brand {
+    font-family: 'Ubuntu', sans-serif;
+    font-size: 13px; font-weight: 700; color: #F5F7FA;
+    margin-right: 12px;
+  }
+  .site-footer .footer-brand span { color: var(--raspberry-light); }
+  .site-footer .footer-copy {
+    font-family: 'General Sans', sans-serif;
+    font-size: 10px; opacity: 0.85; letter-spacing: 0.5px;
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="logo-area">
+
+<header class="site-header">
+  <div class="header-inner">
     <div class="logo-mark" aria-label="Brightday logomark">
       <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
         <g transform="translate(50,50)">
@@ -860,29 +917,40 @@ LOGIN_HTML = """<!DOCTYPE html>
         </g>
       </svg>
     </div>
-    <div class="logo-text">
+    <div class="header-text">
       <span class="brand">brightday</span>
       <span class="sub">SOA Completion Agent</span>
     </div>
   </div>
-  <h1>Sign <em>in</em></h1>
-  <p class="subtitle">Internal access only. Enter your credentials to continue.</p>
-  {% if error %}
-  <div class="error">{{ error }}</div>
-  {% endif %}
-  <form method="POST" action="/login">
-    <div class="field">
-      <label>Username</label>
-      <input type="text" name="username" autocomplete="username" autofocus required>
-    </div>
-    <div class="field">
-      <label>Password</label>
-      <input type="password" name="password" autocomplete="current-password" required>
-    </div>
-    <button class="btn-login" type="submit">Sign In →</button>
-  </form>
-  <p class="footer-note">Brightday Australia · ABN 45 674 252 905 · Internal Use Only</p>
-</div>
+</header>
+
+<main class="login-wrap">
+  <div class="card">
+    <h1>Sign <em>in</em></h1>
+    <p class="subtitle">Internal access only. Enter your credentials to continue.</p>
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+    <form method="POST" action="/login">
+      <div class="field">
+        <label>Username</label>
+        <input type="text" name="username" autocomplete="username" autofocus required>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" name="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn-login" type="submit">Sign In →</button>
+    </form>
+    <p class="footer-note">Brightday Australia · ABN 45 674 252 905</p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <span class="footer-brand">brightday <span>Australia</span></span>
+  <span class="footer-copy">ABN 45 674 252 905 · 260 Spencer Street, Melbourne · Internal Use Only</span>
+</footer>
+
 </body>
 </html>"""
 
