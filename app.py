@@ -179,6 +179,18 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
         except Exception:
             return None
 
+    def _whole_num(s):
+        """Strip a trailing '.0' from a value that's an integer in disguise.
+        Calamine returns numeric cells as floats (e.g. postcode 3137 -> 3137.0).
+        Returns input unchanged if it isn't a clean integer."""
+        if not s:
+            return s
+        try:
+            n = float(s)
+            return str(int(n)) if n == int(n) else str(s)
+        except (ValueError, TypeError):
+            return str(s)
+
     def format_au_phone(raw):
         """Format an Australian phone number as '0XXX XXX XXX'.
         Handles inputs with spaces, dashes, +61 prefix, or already-formatted.
@@ -215,7 +227,8 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
     age         = age_from_dob(15, 2)
     phone       = format_au_phone(cell(16, 2))
     email       = cell(17, 2)
-    address_parts = [p for p in [cell(18,2), cell(19,2), cell(20,2), cell(21,2)] if p]
+    # Strip trailing '.0' on each address part so the postcode (B21) doesn't render as '3137.0'.
+    address_parts = [_whole_num(p) for p in [cell(18,2), cell(19,2), cell(20,2), cell(21,2)] if p]
     address     = ", ".join(address_parts)
 
     # ── Employment ──
@@ -250,12 +263,6 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
     # Per spec: default to B8; use B9 only if B9 is non-empty AND differs from B8.
     # cell() returns "" for both blank and numeric 0, so the simple check covers both.
     # Then strip any trailing '.0' (calamine returns numeric ages as floats).
-    def _whole_num(s):
-        try:
-            n = float(s)
-            return str(int(n)) if n == int(n) else s
-        except (ValueError, TypeError):
-            return s
     ret_age_1 = cell(8, 2)
     ret_age_2 = cell(9, 2)
     retirement_age = ret_age_2 if (ret_age_2 and ret_age_2 != ret_age_1) else ret_age_1
@@ -314,25 +321,47 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
     current_balance = current_super_balance
 
     # ── Insurance across funds ──
-    def insurance_across(row):
+    def insurance_across(row, currency=False):
+        """Join non-empty values from row across fund columns with ' / '.
+        - Numeric 0 / blank cells are skipped.
+        - Trailing '.0' is stripped from whole numbers (calamine returns floats for numeric cells).
+        - When currency=True, numeric values are formatted as $X,XXX (no decimals).
+        - Non-numeric strings (e.g. 'Yes', '$5/wk') are kept as-is.
+        """
         vals = []
         for c in FUND_COLS:
             v = cell_data.get((row, c))
-            if v:
-                s = str(v).strip()
-                if s not in ("0","","None"):
-                    vals.append(s)
+            if v is None:
+                continue
+            # Numeric zero -> treat as empty
+            if isinstance(v, (int, float)) and not isinstance(v, bool) and float(v) == 0:
+                continue
+            s = str(v).strip()
+            if s in ("", "0", "0.0", "None"):
+                continue
+            # Try to interpret as a number (handles "400000.0", "400,000", "$400000")
+            try:
+                n = float(s.replace(",", "").replace("$", ""))
+                if currency:
+                    s_clean = f"${n:,.0f}"
+                elif n == int(n):
+                    s_clean = str(int(n))
+                else:
+                    s_clean = s
+            except (ValueError, TypeError):
+                s_clean = s
+            vals.append(s_clean)
         if not vals:
             return ""
         unique = list(dict.fromkeys(vals))
         return " / ".join(unique)
 
-    life_ins   = insurance_across(102)
-    tpd_ins    = insurance_across(103)
-    ip_month   = insurance_across(104)
-    ip_wait    = insurance_across(105)
-    ip_benefit = insurance_across(106)
-    premiums   = insurance_across(107)
+    life_ins   = insurance_across(102, currency=True)   # Life cover $
+    tpd_ins    = insurance_across(103, currency=True)   # TPD cover $
+    ip_month   = insurance_across(104, currency=True)   # IP monthly benefit $
+    ip_wait    = insurance_across(105)                  # waiting period (duration)
+    ip_benefit = insurance_across(106)                  # benefit period (duration)
+    premiums   = insurance_across(107, currency=True)   # premiums $
 
     # ── Binding Death Nominee ──
     # Per spec: read from row 63 across fund columns (was row 62).
