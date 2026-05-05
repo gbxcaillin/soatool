@@ -588,6 +588,49 @@ def replace_code_in_run(run, code, value, use_red):
             run.font.color.rgb = RED
 
 
+def consolidate_runs_for_code(paragraph, code):
+    """If `code` is split across multiple <w:r> runs (which Word commonly does after
+    edits — spell-check, autocorrect, copy-paste etc.), merge those runs into a single
+    run that contains the whole code. The merged run keeps the formatting of the first
+    affected run. No-op if the code is already in a single run, or not present.
+    """
+    runs = paragraph.runs
+    if not runs:
+        return
+
+    full = "".join(r.text for r in runs)
+    idx = full.find(code)
+    if idx < 0:
+        return  # Code not present
+    end_idx = idx + len(code)
+
+    pos = 0
+    start_run_idx = None
+    end_run_idx = None
+    for i, r in enumerate(runs):
+        run_end = pos + len(r.text)
+        if start_run_idx is None and pos <= idx < run_end:
+            start_run_idx = i
+        if end_run_idx is None and pos < end_idx <= run_end:
+            end_run_idx = i
+            break
+        pos = run_end
+
+    if start_run_idx is None or end_run_idx is None:
+        return
+    if start_run_idx == end_run_idx:
+        return  # Already in one run — fast path handles it
+
+    # Merge text from runs (start+1 .. end) into the start run, then drop them.
+    base = runs[start_run_idx]
+    appended = "".join(runs[j].text for j in range(start_run_idx + 1, end_run_idx + 1))
+    base.text = base.text + appended
+    for j in range(end_run_idx, start_run_idx, -1):
+        parent = runs[j]._r.getparent()
+        if parent is not None:
+            parent.remove(runs[j]._r)
+
+
 def process_paragraph_text(paragraph, data, unmapped):
     """Replace all known codes in a paragraph. Leave unmapped codes untouched."""
     full = get_full_text(paragraph)
@@ -602,10 +645,14 @@ def process_paragraph_text(paragraph, data, unmapped):
             continue  # Leave raw
         if code in data:
             value = data[code]
+            # If Word split the code across multiple runs, merge them first so
+            # `code in run.text` will succeed below.
+            consolidate_runs_for_code(paragraph, code)
             # Work run by run
             for run in paragraph.runs:
                 if code in run.text:
                     replace_code_in_run(run, code, value, use_red=True)
+                    break  # one replacement per code per pass
 
 
 def process_table(table, data, unmapped):
