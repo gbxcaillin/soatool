@@ -10,7 +10,6 @@
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@300,400,500,600,700&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* Brightday brand */
     --navy:        #123559;
     --navy-deep:   #0C243D;
     --navy-light:  #1A4474;
@@ -18,35 +17,24 @@
     --raspberry-light: #FF4593;
     --raspberry-deep:  #C50A5D;
     --rose-garnet: #990A4E;
-
-    /* Surfaces */
     --bg:           #FFFFFF;
     --surface:      #FFFFFF;
     --surface-soft: #F7F8FA;
     --surface-tint: #FAFBFC;
-
-    /* Text */
     --text:        #0E2640;
     --text-muted:  #5C6B7E;
     --text-soft:   #8A95A4;
     --text-onnavy: #F5F7FA;
     --text-onnavy-dim: rgba(245,247,250,0.72);
-
-    /* Lines */
     --border:        #E5E9EF;
     --border-strong: #CBD2DB;
-
-    /* Functional */
     --success:      #18A672;
     --success-soft: #ECFAF4;
     --red:          #DA2929;
     --red-soft:     #FCEEEE;
-
-    /* Shape */
     --radius:    8px;
     --radius-lg: 12px;
     --radius-pill: 999px;
-
     --shadow-sm: 0 1px 2px rgba(14,38,64,0.04);
     --shadow-md: 0 4px 12px rgba(14,38,64,0.06);
   }
@@ -64,331 +52,135 @@
     flex-direction: column;
   }
 
-  /* ── Site header (full-width navy band) ── */
-  .site-header {
-    background: var(--navy);
-    color: var(--text-onnavy);
-    border-bottom: 3px solid var(--raspberry);
-  }
-  .header-inner {
-    max-width: 1080px;
-    margin: 0 auto;
-    padding: 18px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+  /* ── Site header ── */
+  .site-header { background: var(--navy); color: var(--text-onnavy); border-bottom: 3px solid var(--raspberry); }
+  .header-inner { max-width: 1080px; margin: 0 auto; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; }
   .logo-area { display: flex; align-items: center; gap: 14px; }
   .logo-mark { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .logo-mark svg { width: 100%; height: 100%; display: block; }
   .logo-text { display: flex; flex-direction: column; line-height: 1; }
-  .logo-text .brand {
-    font-family: 'Ubuntu', sans-serif;
-    font-size: 24px; font-weight: 700;
-    color: var(--text-onnavy);
-    letter-spacing: -0.5px;
-  }
-  .logo-text .sub {
-    font-family: 'General Sans', sans-serif;
-    font-size: 10px; font-weight: 500;
-    color: var(--raspberry-light);
-    letter-spacing: 2.2px; text-transform: uppercase; margin-top: 5px;
-  }
-  .header-badge {
-    font-family: 'General Sans', sans-serif;
-    font-size: 10px; font-weight: 500; letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--text-onnavy-dim);
-    border: 1px solid rgba(245,247,250,0.20);
-    padding: 6px 14px;
-    border-radius: var(--radius-pill);
-  }
+  .logo-text .brand { font-family: 'Ubuntu', sans-serif; font-size: 24px; font-weight: 700; color: var(--text-onnavy); letter-spacing: -0.5px; }
+  .logo-text .sub { font-family: 'General Sans', sans-serif; font-size: 10px; font-weight: 500; color: var(--raspberry-light); letter-spacing: 2.2px; text-transform: uppercase; margin-top: 5px; }
+  .header-badge { font-family: 'General Sans', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; color: var(--text-onnavy-dim); border: 1px solid rgba(245,247,250,0.20); padding: 6px 14px; border-radius: var(--radius-pill); }
 
   /* ── Page work area ── */
-  .page-wrap {
-    max-width: 920px;
-    margin: 0 auto;
-    padding: 56px 32px 80px;
-    flex: 1;
-    width: 100%;
-  }
+  .page-wrap { max-width: 920px; margin: 0 auto; padding: 40px 32px 64px; flex: 1; width: 100%; }
 
   /* ── Hero ── */
-  .hero { margin-bottom: 56px; animation: fadeUp 0.7s ease both; }
-  .hero-eyebrow {
-    font-family: 'General Sans', sans-serif;
-    font-size: 11px; font-weight: 600; letter-spacing: 3px;
-    text-transform: uppercase; color: var(--raspberry); margin-bottom: 18px;
-    display: flex; align-items: center; gap: 12px;
-  }
+  .hero { margin-bottom: 36px; animation: fadeUp 0.5s ease both; }
+  .hero-eyebrow { font-family: 'General Sans', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--raspberry); margin-bottom: 14px; display: flex; align-items: center; gap: 12px; }
   .hero-eyebrow::before { content: ''; display: block; width: 32px; height: 2px; background: var(--raspberry); border-radius: 2px; }
-  h1 {
-    font-family: 'Ubuntu', sans-serif;
-    font-size: clamp(36px, 5.2vw, 54px); font-weight: 700;
-    line-height: 1.05; color: var(--navy); margin-bottom: 20px;
-    letter-spacing: -1px;
-  }
+  h1 { font-family: 'Ubuntu', sans-serif; font-size: clamp(30px, 4.4vw, 44px); font-weight: 700; line-height: 1.05; color: var(--navy); margin-bottom: 14px; letter-spacing: -0.8px; }
   h1 em { font-style: normal; color: var(--raspberry); }
-  .hero-desc {
-    font-family: 'General Sans', sans-serif;
-    font-size: 15px; line-height: 1.7; color: var(--text-muted);
-    max-width: 620px; font-weight: 400;
-  }
+  .hero-desc { font-family: 'General Sans', sans-serif; font-size: 14px; line-height: 1.7; color: var(--text-muted); max-width: 620px; }
 
-  /* ── Pipeline ── */
-  .pipeline {
-    display: flex; align-items: center;
-    margin-bottom: 48px; animation: fadeUp 0.7s 0.1s ease both;
-  }
-  .pip-step {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; gap: 10px; position: relative;
-  }
-  .pip-step:not(:last-child)::after {
-    content: ''; position: absolute; top: 16px; left: 50%;
-    width: 100%; height: 1px; background: var(--border);
-  }
+  /* ── Wizard pipeline ── */
+  .pipeline { display: flex; align-items: center; margin-bottom: 40px; gap: 0; }
+  .pip-step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; position: relative; }
+  .pip-step:not(:last-child)::after { content: ''; position: absolute; top: 16px; left: 50%; width: 100%; height: 1px; background: var(--border); }
   .pip-step.done:not(:last-child)::after,
-  .pip-step.active:not(:last-child)::after {
-    background: linear-gradient(90deg, var(--raspberry), var(--border));
-  }
-  .pip-num {
-    width: 32px; height: 32px;
-    border: 1px solid var(--border-strong); border-radius: 50%;
-    background: var(--surface);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Ubuntu', sans-serif;
-    font-size: 12px; font-weight: 500; color: var(--text-soft);
-    position: relative; z-index: 1; transition: all 0.3s ease;
-  }
-  .pip-step.active .pip-num {
-    border-color: var(--raspberry); color: var(--raspberry);
-    box-shadow: 0 0 0 4px rgba(245,13,116,0.10);
-  }
+  .pip-step.active:not(:last-child)::after { background: linear-gradient(90deg, var(--raspberry), var(--border)); }
+  .pip-num { width: 32px; height: 32px; border: 1px solid var(--border-strong); border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-family: 'Ubuntu', sans-serif; font-size: 12px; font-weight: 500; color: var(--text-soft); position: relative; z-index: 1; transition: all 0.3s ease; }
+  .pip-step.active .pip-num { border-color: var(--raspberry); color: var(--raspberry); box-shadow: 0 0 0 4px rgba(245,13,116,0.10); }
   .pip-step.done .pip-num { background: var(--raspberry); border-color: var(--raspberry); color: #FFFFFF; }
   .pip-step.done .pip-num::after { content: '✓'; font-size: 13px; }
   .pip-step.done .pip-num span { display: none; }
-  .pip-label {
-    font-family: 'General Sans', sans-serif;
-    font-size: 10px; font-weight: 500; letter-spacing: 1.5px;
-    text-transform: uppercase; color: var(--text-soft); text-align: center;
-    transition: color 0.3s;
-  }
+  .pip-label { font-family: 'General Sans', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-soft); text-align: center; transition: color 0.3s; }
   .pip-step.active .pip-label { color: var(--raspberry); }
+  .pip-step.done .pip-label { color: var(--text); }
 
-  /* ── Cards: shared ── */
-  .surface {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-  }
+  /* ── Step container ── */
+  .step { display: none; animation: fadeUp 0.4s ease both; }
+  .step.visible { display: block; }
+  .step-title { font-family: 'Ubuntu', sans-serif; font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 8px; letter-spacing: -0.3px; }
+  .step-desc { font-family: 'General Sans', sans-serif; font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6; }
 
   /* ── Upload grid ── */
-  .upload-grid {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 16px; margin-bottom: 24px; animation: fadeUp 0.7s 0.2s ease both;
-  }
-  @media (max-width: 580px) { .upload-grid { grid-template-columns: 1fr; } }
-
-  .upload-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 28px 22px 24px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-  }
-  .upload-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0;
-    height: 3px; background: var(--raspberry);
-    transform: scaleX(0); transform-origin: left;
-    transition: transform 0.25s ease;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  }
-  .upload-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); }
+  .upload-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 28px; }
+  @media (max-width: 720px) { .upload-grid { grid-template-columns: 1fr; } }
+  .upload-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px 20px 22px; cursor: pointer; transition: all 0.2s ease; position: relative; overflow: hidden; box-shadow: var(--shadow-sm); }
+  .upload-card.optional { border-style: dashed; }
+  .upload-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--raspberry); transform: scaleX(0); transform-origin: left; transition: transform 0.25s ease; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+  .upload-card:hover { border-color: var(--border-strong); border-style: solid; box-shadow: var(--shadow-md); }
   .upload-card:hover::before, .upload-card.has-file::before { transform: scaleX(1); }
-  .upload-card.has-file { border-color: var(--raspberry); box-shadow: var(--shadow-md); }
-  .upload-card.drag-over {
-    border-color: var(--raspberry);
-    background: var(--surface-soft);
-    box-shadow: 0 0 0 3px rgba(245,13,116,0.12);
-  }
-
-  .card-icon { width: 36px; height: 36px; margin-bottom: 16px; }
-  .card-type {
-    font-family: 'General Sans', sans-serif;
-    font-size: 9px; font-weight: 600; letter-spacing: 2.5px;
-    text-transform: uppercase; color: var(--raspberry); margin-bottom: 6px;
-  }
-  .card-title {
-    font-family: 'Ubuntu', sans-serif;
-    font-size: 20px; font-weight: 700; color: var(--navy);
-    margin-bottom: 10px; line-height: 1.2; letter-spacing: -0.3px;
-  }
-  .card-hint {
-    font-family: 'General Sans', sans-serif;
-    font-size: 12px; color: var(--text-muted); line-height: 1.6;
-  }
-
-  .card-filename {
-    margin-top: 14px; padding: 8px 12px;
-    background: rgba(245,13,116,0.08);
-    border-left: 3px solid var(--raspberry);
-    border-radius: 4px;
-    font-family: 'General Sans', sans-serif;
-    font-size: 11px; color: var(--navy); font-weight: 500;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: none;
-  }
+  .upload-card.has-file { border-color: var(--raspberry); border-style: solid; box-shadow: var(--shadow-md); }
+  .upload-card.drag-over { border-color: var(--raspberry); background: var(--surface-soft); box-shadow: 0 0 0 3px rgba(245,13,116,0.12); }
+  .card-icon { width: 32px; height: 32px; margin-bottom: 14px; }
+  .card-type { font-family: 'General Sans', sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; color: var(--raspberry); margin-bottom: 6px; }
+  .card-type.muted { color: var(--text-soft); }
+  .card-title { font-family: 'Ubuntu', sans-serif; font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 8px; line-height: 1.2; letter-spacing: -0.3px; }
+  .card-hint { font-family: 'General Sans', sans-serif; font-size: 11px; color: var(--text-muted); line-height: 1.6; }
+  .card-filename { margin-top: 14px; padding: 8px 12px; background: rgba(245,13,116,0.08); border-left: 3px solid var(--raspberry); border-radius: 4px; font-family: 'General Sans', sans-serif; font-size: 11px; color: var(--navy); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: none; }
   .upload-card.has-file .card-filename { display: block; }
-
-  .card-remove {
-    position: absolute; top: 12px; right: 12px;
-    width: 24px; height: 24px; border-radius: 50%;
-    background: var(--red-soft); border: 1px solid rgba(218,41,41,0.20);
-    color: var(--red); font-size: 14px; cursor: pointer;
-    display: none; align-items: center; justify-content: center; transition: all 0.2s;
-    line-height: 1;
-  }
+  .card-remove { position: absolute; top: 12px; right: 12px; width: 24px; height: 24px; border-radius: 50%; background: var(--red-soft); border: 1px solid rgba(218,41,41,0.20); color: var(--red); font-size: 14px; cursor: pointer; display: none; align-items: center; justify-content: center; transition: all 0.2s; line-height: 1; }
   .upload-card.has-file .card-remove { display: flex; }
   .card-remove:hover { background: rgba(218,41,41,0.16); }
   input[type="file"] { display: none; }
 
-  /* ── Options panel ── */
-  .options-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 28px;
-    margin-bottom: 24px;
-    animation: fadeUp 0.7s 0.3s ease both;
-    box-shadow: var(--shadow-sm);
-  }
-  .options-title {
-    font-family: 'General Sans', sans-serif;
-    font-size: 10px; font-weight: 600; letter-spacing: 2.5px;
-    text-transform: uppercase; color: var(--raspberry); margin-bottom: 20px;
-    display: flex; align-items: center; gap: 12px;
-  }
-  .options-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  @media (max-width: 580px) { .options-grid { grid-template-columns: 1fr; } }
-  .option-group { display: flex; flex-direction: column; gap: 8px; }
-  .option-label {
-    font-family: 'General Sans', sans-serif;
-    font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
-    text-transform: uppercase; color: var(--text-muted);
-  }
-  .option-label span { color: var(--raspberry); margin-left: 3px; font-size: 12px; }
+  /* ── Panels ── */
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px 26px; margin-bottom: 18px; box-shadow: var(--shadow-sm); }
+  .panel-title { font-family: 'General Sans', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; color: var(--raspberry); margin-bottom: 18px; display: flex; align-items: center; gap: 12px; }
+  .panel-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 580px) { .panel-grid { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field-label { font-family: 'General Sans', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+  .field-label .req { color: var(--raspberry); margin-left: 3px; font-size: 12px; }
+  .field-hint { font-family: 'General Sans', sans-serif; font-size: 11px; color: var(--text-soft); }
 
   /* Select */
-  .styled-select {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: 'General Sans', sans-serif;
-    font-size: 13px; font-weight: 400; padding: 11px 14px;
-    cursor: pointer; outline: none; width: 100%;
-    border-radius: var(--radius);
-    appearance: none; -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23F50D74' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    padding-right: 36px;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
+  .styled-select { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'General Sans', sans-serif; font-size: 13px; font-weight: 400; padding: 11px 14px; cursor: pointer; outline: none; width: 100%; border-radius: var(--radius); appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23F50D74' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; transition: border-color 0.2s, box-shadow 0.2s; }
   .styled-select:hover { border-color: var(--border-strong); }
   .styled-select:focus { border-color: var(--raspberry); box-shadow: 0 0 0 3px rgba(245,13,116,0.10); }
   .styled-select.has-value { border-color: var(--raspberry); color: var(--navy); font-weight: 500; }
-  .styled-select option { background: var(--surface); color: var(--text); }
 
   /* Checkbox */
-  .checkbox-wrap {
-    display: flex; align-items: center; gap: 12px;
-    padding: 11px 14px; border: 1px solid var(--border);
-    background: var(--surface); cursor: pointer;
-    border-radius: var(--radius);
-    transition: all 0.2s;
-  }
+  .checkbox-wrap { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; border-radius: var(--radius); transition: all 0.2s; }
   .checkbox-wrap:hover { border-color: var(--border-strong); background: var(--surface-soft); }
   .checkbox-wrap.active { border-color: var(--raspberry); background: rgba(245,13,116,0.04); }
-  .checkbox-box {
-    width: 16px; height: 16px;
-    border: 1px solid var(--border-strong);
-    background: var(--surface);
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-    border-radius: 4px;
-    transition: all 0.2s;
-  }
+  .checkbox-box { width: 16px; height: 16px; border: 1px solid var(--border-strong); background: var(--surface); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 4px; transition: all 0.2s; }
   .checkbox-wrap.active .checkbox-box { background: var(--raspberry); border-color: var(--raspberry); }
   .checkbox-mark { font-size: 10px; color: #FFFFFF; display: none; font-weight: 700; }
   .checkbox-wrap.active .checkbox-mark { display: block; }
-  .checkbox-text {
-    font-family: 'General Sans', sans-serif;
-    font-size: 11px; color: var(--text-muted); line-height: 1.4;
-  }
+  .checkbox-text { font-family: 'General Sans', sans-serif; font-size: 11px; color: var(--text-muted); line-height: 1.4; }
   .checkbox-wrap.active .checkbox-text { color: var(--navy); }
   .checkbox-text strong { color: var(--navy); }
 
-  /* ── Run section ── */
-  .run-wrap {
-    display: flex; justify-content: flex-end; align-items: center;
-    gap: 20px; animation: fadeUp 0.7s 0.4s ease both; margin-bottom: 40px;
-    flex-wrap: wrap;
-  }
-  .run-note {
-    font-family: 'General Sans', sans-serif;
-    font-size: 12px; color: var(--text-muted); line-height: 1.5;
-    max-width: 320px; text-align: right;
-  }
-  .btn-run {
-    background: var(--raspberry); color: #FFFFFF; border: none;
-    padding: 16px 40px;
-    font-family: 'Ubuntu', sans-serif;
-    font-size: 11px; font-weight: 700; letter-spacing: 2px;
-    text-transform: uppercase; cursor: pointer;
-    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
-    flex-shrink: 0;
-    border-radius: var(--radius-pill);
-    box-shadow: 0 4px 14px rgba(245,13,116,0.30);
-  }
-  .btn-run:hover { background: var(--raspberry-light); box-shadow: 0 6px 18px rgba(245,13,116,0.36); }
-  .btn-run:active { transform: translateY(1px); }
-  .btn-run:disabled { background: #C9D0DA; color: #FFFFFF; cursor: not-allowed; box-shadow: none; }
+  /* Textarea (for goals) */
+  .styled-textarea { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: 'General Sans', sans-serif; font-size: 13px; padding: 11px 14px; outline: none; width: 100%; border-radius: var(--radius); resize: vertical; min-height: 84px; line-height: 1.55; transition: border-color 0.2s, box-shadow 0.2s; }
+  .styled-textarea:hover { border-color: var(--border-strong); }
+  .styled-textarea:focus { border-color: var(--raspberry); box-shadow: 0 0 0 3px rgba(245,13,116,0.10); }
+  .styled-textarea.from-kyc { border-left: 3px solid var(--raspberry); padding-left: 12px; }
 
-  /* ── Status panel ── */
-  .status-panel {
-    background: var(--surface-soft);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 24px 28px;
-    display: none;
-    animation: fadeUp 0.4s ease both;
-    margin-bottom: 16px;
-  }
+  /* KYC summary card */
+  .kyc-summary { background: var(--surface-soft); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 22px; margin-bottom: 18px; }
+  .kyc-summary-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 12px; }
+  .kyc-summary-row .label { color: var(--text-muted); font-weight: 500; }
+  .kyc-summary-row .value { color: var(--navy); font-weight: 600; }
+  .kyc-tag { display: inline-block; padding: 2px 8px; border-radius: var(--radius-pill); font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-left: 6px; }
+  .kyc-tag.in { background: var(--success-soft); color: var(--success); }
+  .kyc-tag.out { background: rgba(245,13,116,0.10); color: var(--raspberry); }
+
+  /* Step actions */
+  .step-actions { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 28px; flex-wrap: wrap; }
+  .step-actions .right { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-left: auto; }
+  .btn { font-family: 'Ubuntu', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; border-radius: var(--radius-pill); border: none; padding: 14px 32px; }
+  .btn-primary { background: var(--raspberry); color: #FFFFFF; box-shadow: 0 4px 14px rgba(245,13,116,0.30); }
+  .btn-primary:hover:not(:disabled) { background: var(--raspberry-light); box-shadow: 0 6px 18px rgba(245,13,116,0.36); }
+  .btn-primary:active:not(:disabled) { transform: translateY(1px); }
+  .btn-primary:disabled { background: #C9D0DA; color: #FFFFFF; cursor: not-allowed; box-shadow: none; }
+  .btn-secondary { background: transparent; color: var(--navy); border: 1px solid var(--border-strong); }
+  .btn-secondary:hover { border-color: var(--navy); background: var(--surface-soft); }
+  .step-note { font-family: 'General Sans', sans-serif; font-size: 11px; color: var(--text-muted); line-height: 1.5; max-width: 320px; }
+
+  /* Status panel */
+  .status-panel { background: var(--surface-soft); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px 26px; display: none; animation: fadeUp 0.4s ease both; margin-bottom: 16px; }
   .status-panel.visible { display: block; }
-  .status-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-  .status-title {
-    font-family: 'General Sans', sans-serif;
-    font-size: 10px; font-weight: 600; letter-spacing: 2.5px;
-    text-transform: uppercase; color: var(--raspberry);
-  }
-  .status-spinner {
-    width: 16px; height: 16px;
-    border: 2px solid var(--border);
-    border-top-color: var(--raspberry);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite; display: none;
-  }
+  .status-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .status-title { font-family: 'General Sans', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; color: var(--raspberry); }
+  .status-spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--raspberry); border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
   .status-spinner.visible { display: block; }
-  .log-lines {
-    font-size: 12px; font-family: 'JetBrains Mono', 'Courier New', monospace;
-    line-height: 2; color: var(--text-muted);
-  }
+  .log-lines { font-size: 12px; font-family: 'JetBrains Mono', 'Courier New', monospace; line-height: 2; color: var(--text-muted); }
   .log-line { display: flex; align-items: flex-start; gap: 12px; }
   .log-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border-strong); margin-top: 7px; flex-shrink: 0; transition: background 0.3s; }
   .log-line.active .log-dot { background: var(--raspberry); box-shadow: 0 0 6px rgba(245,13,116,0.4); }
@@ -398,99 +190,36 @@
   .log-line.done .log-text   { color: var(--text-muted); }
   .log-line.error .log-text  { color: var(--red); }
 
-  /* ── Result ── */
-  .result-panel { display: none; animation: fadeUp 0.4s ease both; margin-bottom: 40px; }
+  /* Result */
+  .result-panel { display: none; animation: fadeUp 0.4s ease both; margin-bottom: 24px; }
   .result-panel.visible { display: block; }
-  .result-box {
-    background: var(--success-soft);
-    border: 1px solid rgba(24,166,114,0.30);
-    border-radius: var(--radius-lg);
-    padding: 22px 28px;
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 20px; flex-wrap: wrap;
-  }
+  .result-box { background: var(--success-soft); border: 1px solid rgba(24,166,114,0.30); border-radius: var(--radius-lg); padding: 22px 28px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
   .result-box.error-box { background: var(--red-soft); border-color: rgba(218,41,41,0.30); }
   .result-info { flex: 1; }
-  .result-label {
-    font-family: 'General Sans', sans-serif;
-    font-size: 9px; font-weight: 600; letter-spacing: 2px;
-    text-transform: uppercase; color: var(--success); margin-bottom: 6px;
-  }
+  .result-label { font-family: 'General Sans', sans-serif; font-size: 9px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--success); margin-bottom: 6px; }
   .error-box .result-label { color: var(--red); }
-  .result-name {
-    font-family: 'Ubuntu', sans-serif;
-    font-size: 18px; font-weight: 700; color: var(--navy);
-    letter-spacing: -0.2px;
-  }
-  .result-meta {
-    font-family: 'General Sans', sans-serif;
-    font-size: 11px; color: var(--text-muted); margin-top: 4px;
-  }
+  .result-name { font-family: 'Ubuntu', sans-serif; font-size: 18px; font-weight: 700; color: var(--navy); letter-spacing: -0.2px; }
+  .result-meta { font-family: 'General Sans', sans-serif; font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
-  /* ── Error ── */
-  .error-msg {
-    background: var(--red-soft);
-    border: 1px solid rgba(218,41,41,0.30);
-    border-radius: var(--radius);
-    padding: 14px 18px;
-    font-size: 12px;
-    color: var(--red);
-    margin-top: 12px; display: none; line-height: 1.6;
-    font-family: 'General Sans', sans-serif;
-  }
+  /* Error msg */
+  .error-msg { background: var(--red-soft); border: 1px solid rgba(218,41,41,0.30); border-radius: var(--radius); padding: 14px 18px; font-size: 12px; color: var(--red); margin-top: 12px; display: none; line-height: 1.6; font-family: 'General Sans', sans-serif; }
   .error-msg.visible { display: block; }
 
-  /* ── Disclaimer ── */
-  .disclaimer {
-    margin-top: 56px;
-    padding: 20px 22px;
-    background: var(--surface-soft);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--raspberry);
-    border-radius: var(--radius);
-    display: flex; gap: 14px; align-items: flex-start;
-    animation: fadeUp 0.7s 0.5s ease both;
-  }
+  /* Disclaimer */
+  .disclaimer { margin-top: 40px; padding: 18px 20px; background: var(--surface-soft); border: 1px solid var(--border); border-left: 3px solid var(--raspberry); border-radius: var(--radius); display: flex; gap: 14px; align-items: flex-start; }
   .disc-icon { color: var(--raspberry); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-  .disc-text {
-    font-family: 'General Sans', sans-serif;
-    font-size: 12px; line-height: 1.6; color: var(--text-muted);
-  }
+  .disc-text { font-family: 'General Sans', sans-serif; font-size: 12px; line-height: 1.6; color: var(--text-muted); }
   .disc-text strong { color: var(--navy); font-weight: 600; }
 
-  /* ── Site footer ── */
-  .site-footer {
-    background: var(--navy-deep);
-    color: var(--text-onnavy-dim);
-    padding: 28px 0;
-    margin-top: auto;
-  }
-  .footer-inner {
-    max-width: 1080px;
-    margin: 0 auto;
-    padding: 0 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  .footer-brand {
-    font-family: 'Ubuntu', sans-serif;
-    font-size: 14px; font-weight: 700;
-    color: var(--text-onnavy);
-    letter-spacing: -0.2px;
-  }
+  /* Footer */
+  .site-footer { background: var(--navy-deep); color: var(--text-onnavy-dim); padding: 24px 0; margin-top: auto; }
+  .footer-inner { max-width: 1080px; margin: 0 auto; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .footer-brand { font-family: 'Ubuntu', sans-serif; font-size: 14px; font-weight: 700; color: var(--text-onnavy); letter-spacing: -0.2px; }
   .footer-brand span { color: var(--raspberry-light); }
-  .footer-copy {
-    font-family: 'General Sans', sans-serif;
-    font-size: 10px;
-    color: var(--text-onnavy-dim);
-    letter-spacing: 0.5px;
-  }
+  .footer-copy { font-family: 'General Sans', sans-serif; font-size: 10px; color: var(--text-onnavy-dim); letter-spacing: 0.5px; }
 
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes spin  { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -499,7 +228,6 @@
   <div class="header-inner">
     <div class="logo-area">
       <div class="logo-mark" aria-label="Brightday logomark">
-        <!-- Brightday flower logomark — 8 rounded squares arranged radially -->
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
           <g transform="translate(50,50)">
             <g fill="#F50D74" fill-opacity="0.78">
@@ -529,155 +257,197 @@
   <div class="hero">
     <div class="hero-eyebrow">SOA Automation</div>
     <h1>Statement of Advice<br><em>Completion Agent</em></h1>
-    <p class="hero-desc">Upload the Fact Finder and SOA Template, select the client's risk profile and insurance scenario, and the agent will populate all mapped fields in red for adviser review.</p>
+    <p class="hero-desc">Three steps: upload the source files, review the extracted data and adviser options, then generate the SOA. All auto-populated content is flagged in red for adviser review.</p>
   </div>
 
   <!-- Pipeline -->
   <div class="pipeline" id="pipeline">
-    <div class="pip-step active" id="pip-1"><div class="pip-num"><span>1</span></div><div class="pip-label">Upload</div></div>
-    <div class="pip-step" id="pip-2"><div class="pip-num"><span>2</span></div><div class="pip-label">Options</div></div>
-    <div class="pip-step" id="pip-3"><div class="pip-num"><span>3</span></div><div class="pip-label">Extract</div></div>
-    <div class="pip-step" id="pip-4"><div class="pip-num"><span>4</span></div><div class="pip-label">Fill SOA</div></div>
-    <div class="pip-step" id="pip-5"><div class="pip-num"><span>5</span></div><div class="pip-label">Complete</div></div>
+    <div class="pip-step active" data-step="1"><div class="pip-num"><span>1</span></div><div class="pip-label">Upload</div></div>
+    <div class="pip-step" data-step="2"><div class="pip-num"><span>2</span></div><div class="pip-label">Review</div></div>
+    <div class="pip-step" data-step="3"><div class="pip-num"><span>3</span></div><div class="pip-label">Generate</div></div>
   </div>
 
-  <!-- Upload Cards -->
-  <div class="upload-grid">
+  <!-- ───────────── Step 1: Upload ───────────── -->
+  <section class="step visible" id="step-1">
+    <div class="step-title">Upload source files</div>
+    <div class="step-desc">Fact Finder and SOA Template are required. The KYC File Note is optional — when supplied, the agent extracts the client goals and pre-fills the next step.</div>
 
-    <div class="upload-card" id="card-ff" onclick="triggerUpload('ff')"
-         ondragover="handleDrag(event,'ff')" ondragleave="clearDrag('ff')" ondrop="handleDrop(event,'ff')">
-      <button class="card-remove" onclick="removeFile(event,'ff')">×</button>
-      <svg class="card-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="4" y="3" width="22" height="30" rx="2" stroke="#F50D74" stroke-width="1.4"/>
-        <path d="M8 10h14M8 15h14M8 20h10" stroke="#F50D74" stroke-width="1.4" stroke-linecap="round"/>
-        <rect x="18" y="22" width="14" height="11" rx="2" fill="#FFFFFF" stroke="#18A672" stroke-width="1.4"/>
-        <path d="M21 26h8M21 29h5" stroke="#18A672" stroke-width="1.2" stroke-linecap="round"/>
-      </svg>
-      <div class="card-type">Step 01</div>
-      <div class="card-title">Fact Finder</div>
-      <div class="card-hint">Client data spreadsheet · .xlsx format</div>
-      <div class="card-filename" id="ff-name">—</div>
-      <input type="file" id="input-ff" accept=".xlsx,.xls" onchange="handleFile('ff',this)">
-    </div>
+    <div class="upload-grid">
 
-    <div class="upload-card" id="card-soa" onclick="triggerUpload('soa')"
-         ondragover="handleDrag(event,'soa')" ondragleave="clearDrag('soa')" ondrop="handleDrop(event,'soa')">
-      <button class="card-remove" onclick="removeFile(event,'soa')">×</button>
-      <svg class="card-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="4" y="3" width="22" height="30" rx="2" stroke="#F50D74" stroke-width="1.4"/>
-        <path d="M8 9h14M8 14h14M8 19h14M8 24h14M8 29h8" stroke="rgba(245,13,116,0.35)" stroke-width="1.4" stroke-linecap="round"/>
-        <path d="M26 20l4 4-4 4" stroke="#F50D74" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M20 24h10" stroke="#F50D74" stroke-width="1.4" stroke-linecap="round"/>
-      </svg>
-      <div class="card-type">Step 02</div>
-      <div class="card-title">SOA Template</div>
-      <div class="card-hint">Document with {{placeholders}} · .docx format</div>
-      <div class="card-filename" id="soa-name">—</div>
-      <input type="file" id="input-soa" accept=".docx" onchange="handleFile('soa',this)">
-    </div>
-
-  </div>
-
-  <!-- Options Panel -->
-  <div class="options-panel">
-    <div class="options-title">Adviser Options</div>
-    <div class="options-grid">
-
-      <div class="option-group">
-        <div class="option-label">Risk Profile <span>*</span></div>
-        <select class="styled-select" id="risk-profile" onchange="onSelectChange(this)">
-          <option value="">— Select risk profile —</option>
-          <option value="High Growth">High Growth</option>
-          <option value="Growth">Growth</option>
-          <option value="Balanced">Balanced</option>
-          <option value="Moderately Conservative">Moderately Conservative</option>
-          <option value="Conservative">Conservative</option>
-        </select>
-        <div style="font-family:'General Sans',sans-serif;font-size:11px;color:var(--text-soft);margin-top:4px;">Required — inserted in red font</div>
+      <div class="upload-card" id="card-ff" onclick="triggerUpload('ff')"
+           ondragover="handleDrag(event,'ff')" ondragleave="clearDrag('ff')" ondrop="handleDrop(event,'ff')">
+        <button class="card-remove" onclick="removeFile(event,'ff')">×</button>
+        <svg class="card-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="3" width="22" height="30" rx="2" stroke="#F50D74" stroke-width="1.4"/>
+          <path d="M8 10h14M8 15h14M8 20h10" stroke="#F50D74" stroke-width="1.4" stroke-linecap="round"/>
+          <rect x="18" y="22" width="14" height="11" rx="2" fill="#FFFFFF" stroke="#18A672" stroke-width="1.4"/>
+          <path d="M21 26h8M21 29h5" stroke="#18A672" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+        <div class="card-type">Required</div>
+        <div class="card-title">Fact Finder</div>
+        <div class="card-hint">Client data spreadsheet · .xlsx</div>
+        <div class="card-filename" id="ff-name">—</div>
+        <input type="file" id="input-ff" accept=".xlsx,.xls" onchange="handleFile('ff',this)">
       </div>
 
-      <div class="option-group">
-        <div class="option-label">Insurance Scenario <span>*</span></div>
-        <select class="styled-select" id="scenario" onchange="onSelectChange(this)">
-          <option value="">— Select scenario —</option>
-          <option value="1">1 — Has group insurance, wants underwritten insurance</option>
-          <option value="2">2 — Has underwritten insurance, wants new underwritten insurance</option>
-          <option value="3">3 — Has underwritten insurance, wants to maintain underwritten insurance</option>
-          <option value="4">4 — No insurance, wants underwritten insurance</option>
-          <option value="5">5 — No insurance, doesn't want insurance</option>
-          <option value="6">6 — Has group insurance, doesn't want new insurance</option>
-        </select>
-        <div style="font-family:'General Sans',sans-serif;font-size:11px;color:var(--text-soft);margin-top:4px;">Required — keeps the matching scenario block, deletes the others</div>
+      <div class="upload-card" id="card-soa" onclick="triggerUpload('soa')"
+           ondragover="handleDrag(event,'soa')" ondragleave="clearDrag('soa')" ondrop="handleDrop(event,'soa')">
+        <button class="card-remove" onclick="removeFile(event,'soa')">×</button>
+        <svg class="card-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="3" width="22" height="30" rx="2" stroke="#F50D74" stroke-width="1.4"/>
+          <path d="M8 9h14M8 14h14M8 19h14M8 24h14M8 29h8" stroke="rgba(245,13,116,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M26 20l4 4-4 4" stroke="#F50D74" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M20 24h10" stroke="#F50D74" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <div class="card-type">Required</div>
+        <div class="card-title">SOA Template</div>
+        <div class="card-hint">Document with {{placeholders}} · .docx</div>
+        <div class="card-filename" id="soa-name">—</div>
+        <input type="file" id="input-soa" accept=".docx" onchange="handleFile('soa',this)">
+      </div>
+
+      <div class="upload-card optional" id="card-kyc" onclick="triggerUpload('kyc')"
+           ondragover="handleDrag(event,'kyc')" ondragleave="clearDrag('kyc')" ondrop="handleDrop(event,'kyc')">
+        <button class="card-remove" onclick="removeFile(event,'kyc')">×</button>
+        <svg class="card-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="3" width="22" height="30" rx="2" stroke="#F50D74" stroke-width="1.4" stroke-dasharray="3 2"/>
+          <circle cx="15" cy="13" r="3.2" stroke="#F50D74" stroke-width="1.4"/>
+          <path d="M9 22c1.5-2.4 4-3.6 6-3.6s4.5 1.2 6 3.6" stroke="#F50D74" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M22 11l4 4M22 15l4-4" stroke="#18A672" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <div class="card-type muted">Optional</div>
+        <div class="card-title">KYC File Note</div>
+        <div class="card-hint">Pre-fills goals + risk profile · .docx</div>
+        <div class="card-filename" id="kyc-name">—</div>
+        <input type="file" id="input-kyc" accept=".docx" onchange="handleFile('kyc',this)">
       </div>
 
     </div>
 
-    <div class="options-title" style="margin-top:28px;">Section Toggles</div>
-    <div class="options-grid">
+    <div class="step-actions">
+      <div class="step-note">FF + SOA template are required to continue. KYC is optional but recommended.</div>
+      <div class="right">
+        <button class="btn btn-primary" id="btn-step1-continue" onclick="goToStep2()" disabled>Continue →</button>
+      </div>
+    </div>
 
-      <div class="option-group">
+    <div class="error-msg" id="step1-error"></div>
+  </section>
+
+  <!-- ───────────── Step 2: Review ───────────── -->
+  <section class="step" id="step-2">
+    <div class="step-title">Review &amp; confirm</div>
+    <div class="step-desc">Confirm the adviser options below. If a KYC note was uploaded, fields are pre-filled — edit anything that needs adjusting before generating.</div>
+
+    <!-- KYC summary (only shown when KYC was uploaded) -->
+    <div class="kyc-summary" id="kyc-summary" style="display:none;">
+      <div class="kyc-summary-row"><span class="label">KYC Note</span><span class="value" id="kyc-meta">—</span></div>
+      <div class="kyc-summary-row"><span class="label">Risk profile from KYC</span><span class="value" id="kyc-risk">—</span></div>
+      <div class="kyc-summary-row"><span class="label">Goal scope</span><span class="value" id="kyc-scope">—</span></div>
+    </div>
+
+    <!-- Adviser options -->
+    <div class="panel">
+      <div class="panel-title">Adviser options</div>
+      <div class="panel-grid">
+        <div class="field">
+          <div class="field-label">Risk Profile <span class="req">*</span></div>
+          <select class="styled-select" id="risk-profile" onchange="onSelectChange(this)">
+            <option value="">— Select risk profile —</option>
+            <option value="High Growth">High Growth</option>
+            <option value="Growth">Growth</option>
+            <option value="Balanced">Balanced</option>
+            <option value="Moderately Conservative">Moderately Conservative</option>
+            <option value="Conservative">Conservative</option>
+          </select>
+          <div class="field-hint">Required — inserted in red font</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Insurance Scenario <span class="req">*</span></div>
+          <select class="styled-select" id="scenario" onchange="onSelectChange(this)">
+            <option value="">— Select scenario —</option>
+            <option value="1">1 — Has group insurance, wants underwritten insurance</option>
+            <option value="2">2 — Has underwritten insurance, wants new underwritten insurance</option>
+            <option value="3">3 — Has underwritten insurance, wants to maintain underwritten insurance</option>
+            <option value="4">4 — No insurance, wants underwritten insurance</option>
+            <option value="5">5 — No insurance, doesn't want insurance</option>
+            <option value="6">6 — Has group insurance, doesn't want new insurance</option>
+          </select>
+          <div class="field-hint">Required — keeps the matching scenario block, deletes the others</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section toggles -->
+    <div class="panel">
+      <div class="panel-title">Section toggles</div>
+      <div class="panel-grid">
         <div class="checkbox-wrap" id="no-insurance-wrap" data-flag="no_insurance" onclick="toggleCheckbox(this)">
           <div class="checkbox-box"><span class="checkbox-mark">✓</span></div>
-          <div class="checkbox-text">
-            <strong style="display:block;font-size:11px;color:inherit;margin-bottom:2px;font-weight:600;">No Insurance Advice</strong>
-            Remove the no-insurance section from the final SOA
-          </div>
+          <div class="checkbox-text"><strong>No Insurance Advice</strong><br>Remove the no-insurance section from the SOA</div>
         </div>
-      </div>
-
-      <div class="option-group">
         <div class="checkbox-wrap" id="no-trauma-wrap" data-flag="no_trauma" onclick="toggleCheckbox(this)">
           <div class="checkbox-box"><span class="checkbox-mark">✓</span></div>
-          <div class="checkbox-text">
-            <strong style="display:block;font-size:11px;color:inherit;margin-bottom:2px;font-weight:600;">No Trauma Advice</strong>
-            Remove scoped-trauma sections from the SOA
-          </div>
+          <div class="checkbox-text"><strong>No Trauma Advice</strong><br>Remove scoped-trauma sections</div>
         </div>
-      </div>
-
-      <div class="option-group">
         <div class="checkbox-wrap" id="no-salsac-wrap" data-flag="no_salsac" onclick="toggleCheckbox(this)">
           <div class="checkbox-box"><span class="checkbox-mark">✓</span></div>
-          <div class="checkbox-text">
-            <strong style="display:block;font-size:11px;color:inherit;margin-bottom:2px;font-weight:600;">No Salary Sacrifice</strong>
-            Remove salary-sacrifice advice sections
-          </div>
+          <div class="checkbox-text"><strong>No Salary Sacrifice</strong><br>Remove salary-sacrifice advice sections</div>
         </div>
-      </div>
-
-      <div class="option-group">
         <div class="checkbox-wrap" id="insurance-only-wrap" data-flag="insurance_only" onclick="toggleCheckbox(this)">
           <div class="checkbox-box"><span class="checkbox-mark">✓</span></div>
-          <div class="checkbox-text">
-            <strong style="display:block;font-size:11px;color:inherit;margin-bottom:2px;font-weight:600;">Insurance-Only Client</strong>
-            Remove non-insurance content from the SOA
-          </div>
+          <div class="checkbox-text"><strong>Insurance-Only Client</strong><br>Remove non-insurance content</div>
         </div>
       </div>
-
     </div>
-  </div>
 
-  <!-- Run -->
-  <div class="run-wrap">
-    <div class="run-note">All auto-populated fields will appear in red for mandatory adviser review before client delivery.</div>
-    <button class="btn-run" id="btn-run" onclick="runAgent()" disabled>Generate SOA →</button>
-  </div>
-
-  <!-- Status -->
-  <div class="status-panel" id="status-panel">
-    <div class="status-header">
-      <div class="status-title">Processing Log</div>
-      <div class="status-spinner" id="spinner"></div>
+    <!-- Goals (shown only if KYC uploaded; otherwise this section stays hidden) -->
+    <div class="panel" id="goals-panel" style="display:none;">
+      <div class="panel-title">Client goals (from KYC note — editable)</div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="field"><div class="field-label">Super Goal</div><textarea class="styled-textarea from-kyc" id="goal_super" rows="3"></textarea></div>
+        <div class="field"><div class="field-label">Insurance Goal</div><textarea class="styled-textarea from-kyc" id="goal_insurance" rows="3"></textarea></div>
+        <div class="field"><div class="field-label">Salary Sacrifice / Contributions Goal</div><textarea class="styled-textarea from-kyc" id="goal_salary_sacrifice" rows="3"></textarea></div>
+        <div class="field"><div class="field-label">Estate Planning Goal</div><textarea class="styled-textarea from-kyc" id="goal_estate_planning" rows="3"></textarea></div>
+        <div class="field"><div class="field-label">Retirement Goal</div><textarea class="styled-textarea from-kyc" id="goal_retirement" rows="3"></textarea></div>
+      </div>
+      <div class="field-hint" style="margin-top:10px;">Empty fields stay raw <code>{{code}}</code> in the SOA for manual completion.</div>
     </div>
-    <div class="log-lines" id="log-lines"></div>
-  </div>
 
-  <!-- Error -->
-  <div class="error-msg" id="error-msg"></div>
+    <div class="step-actions">
+      <button class="btn btn-secondary" onclick="goToStep1()">← Back</button>
+      <div class="right">
+        <button class="btn btn-primary" id="btn-step2-continue" onclick="goToStep3()" disabled>Continue →</button>
+      </div>
+    </div>
+  </section>
 
-  <!-- Result -->
-  <div class="result-panel" id="result-panel"></div>
+  <!-- ───────────── Step 3: Generate ───────────── -->
+  <section class="step" id="step-3">
+    <div class="step-title">Generate the SOA</div>
+    <div class="step-desc">Review the summary below, then click Generate. The completed draft will download automatically with all auto-populated fields in red.</div>
+
+    <div class="panel">
+      <div class="panel-title">Summary</div>
+      <div id="summary-box" style="font-family:'General Sans',sans-serif;font-size:13px;line-height:1.7;"></div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-secondary" onclick="goToStep2()">← Back</button>
+      <div class="right">
+        <div class="step-note">All auto-populated fields appear in red for mandatory adviser review.</div>
+        <button class="btn btn-primary" id="btn-generate" onclick="runAgent()">Generate SOA →</button>
+      </div>
+    </div>
+
+    <div class="status-panel" id="status-panel">
+      <div class="status-header"><div class="status-title">Processing log</div><div class="status-spinner" id="spinner"></div></div>
+      <div class="log-lines" id="log-lines"></div>
+    </div>
+
+    <div class="error-msg" id="step3-error"></div>
+    <div class="result-panel" id="result-panel"></div>
+  </section>
 
   <div class="disclaimer">
     <div class="disc-icon">⚠</div>
@@ -696,8 +466,11 @@
 </footer>
 
 <script>
-  const files = { ff: null, soa: null };
+  // ── State ──
+  const files = { ff: null, soa: null, kyc: null };
   const flags = { no_insurance: false, no_trauma: false, no_salsac: false, insurance_only: false };
+  let kycData = null;
+  let currentStep = 1;
 
   // ── File handling ──
   function triggerUpload(key) {
@@ -710,7 +483,7 @@
     files[key] = file;
     document.getElementById('card-' + key).classList.add('has-file');
     document.getElementById(key + '-name').textContent = file.name;
-    checkReady();
+    refreshStep1();
   }
   function removeFile(e, key) {
     e.stopPropagation();
@@ -718,7 +491,7 @@
     document.getElementById('card-' + key).classList.remove('has-file');
     document.getElementById(key + '-name').textContent = '—';
     document.getElementById('input-' + key).value = '';
-    checkReady();
+    refreshStep1();
   }
   function handleDrag(e, key) { e.preventDefault(); document.getElementById('card-' + key).classList.add('drag-over'); }
   function clearDrag(key) { document.getElementById('card-' + key).classList.remove('drag-over'); }
@@ -729,13 +502,156 @@
     files[key] = file;
     document.getElementById('card-' + key).classList.add('has-file');
     document.getElementById(key + '-name').textContent = file.name;
-    checkReady();
+    refreshStep1();
   }
 
-  // ── Options ──
+  function refreshStep1() {
+    const ready = files.ff && files.soa;
+    document.getElementById('btn-step1-continue').disabled = !ready;
+  }
+
+  // ── Step navigation ──
+  function setStep(n) {
+    currentStep = n;
+    for (let i = 1; i <= 3; i++) {
+      document.getElementById('step-' + i).classList.toggle('visible', i === n);
+    }
+    document.querySelectorAll('.pip-step').forEach(el => {
+      const s = Number(el.dataset.step);
+      el.classList.toggle('active', s === n);
+      el.classList.toggle('done',   s <  n);
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function goToStep1() { setStep(1); }
+
+  async function goToStep2() {
+    document.getElementById('step1-error').classList.remove('visible');
+    const btn = document.getElementById('btn-step1-continue');
+    btn.disabled = true;
+
+    // If a KYC was uploaded, parse it server-side first
+    if (files.kyc) {
+      try {
+        const fd = new FormData();
+        fd.append('kyc_note', files.kyc);
+        const r = await fetch('/api/extract', { method: 'POST', body: fd });
+        if (!r.ok) {
+          const err = await r.json();
+          showStep1Error(err.error || 'Failed to parse KYC note');
+          btn.disabled = false;
+          return;
+        }
+        const payload = await r.json();
+        kycData = payload.kyc;
+        applyKycToReview(kycData, payload.suggested);
+      } catch (err) {
+        showStep1Error('Network error parsing KYC: ' + err);
+        btn.disabled = false;
+        return;
+      }
+    } else {
+      kycData = null;
+      // Hide KYC summary + goals panel since there's no KYC data
+      document.getElementById('kyc-summary').style.display = 'none';
+      document.getElementById('goals-panel').style.display = 'none';
+    }
+    btn.disabled = false;
+    refreshStep2();
+    setStep(2);
+  }
+
+  function applyKycToReview(kyc, suggested) {
+    // Show summary
+    const sum = document.getElementById('kyc-summary');
+    sum.style.display = 'block';
+    const meta = kyc.meta || {};
+    document.getElementById('kyc-meta').textContent = (meta.client_name || '') +
+      (meta.adviser ? ' · ' + meta.adviser : '') +
+      (meta.meeting_date ? ' · ' + meta.meeting_date : '');
+    document.getElementById('kyc-risk').textContent = kyc.risk_profile || '—';
+    const scope = kyc.scope || {};
+    const scopeStr = Object.entries(scope).map(([k,v]) => {
+      const label = ({super:'Super', insurance:'Insurance', salary_sacrifice:'Sal Sac', estate_planning:'Estate', retirement:'Retire'})[k] || k;
+      const cls = v === 'out' ? 'out' : 'in';
+      return `<span class="kyc-tag ${cls}">${label} ${v}</span>`;
+    }).join(' ');
+    document.getElementById('kyc-scope').innerHTML = scopeStr;
+
+    // Pre-fill risk profile
+    const rp = document.getElementById('risk-profile');
+    if (suggested.risk_profile) {
+      rp.value = suggested.risk_profile;
+      rp.classList.toggle('has-value', !!rp.value);
+    }
+
+    // Pre-fill checkboxes from suggested flags
+    setCheckbox('no-insurance-wrap', 'no_insurance', !!suggested.no_insurance);
+    setCheckbox('no-salsac-wrap',    'no_salsac',    !!suggested.no_salsac);
+    setCheckbox('no-trauma-wrap',    'no_trauma',    !!suggested.no_trauma);
+    setCheckbox('insurance-only-wrap','insurance_only', !!suggested.insurance_only);
+
+    // Pre-fill goals
+    document.getElementById('goals-panel').style.display = 'block';
+    const goals = kyc.goals || {};
+    document.getElementById('goal_super').value             = goals.super || '';
+    document.getElementById('goal_insurance').value         = goals.insurance || '';
+    document.getElementById('goal_salary_sacrifice').value  = goals.salary_sacrifice || '';
+    document.getElementById('goal_estate_planning').value   = goals.estate_planning || '';
+    document.getElementById('goal_retirement').value        = goals.retirement || '';
+  }
+
+  function setCheckbox(elId, flagKey, on) {
+    flags[flagKey] = on;
+    document.getElementById(elId).classList.toggle('active', on);
+  }
+
+  function showStep1Error(msg) {
+    const el = document.getElementById('step1-error');
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  function refreshStep2() {
+    const risk = document.getElementById('risk-profile').value;
+    const scen = document.getElementById('scenario').value;
+    document.getElementById('btn-step2-continue').disabled = !(risk && scen);
+  }
+
+  function goToStep3() {
+    populateSummary();
+    setStep(3);
+  }
+
+  function populateSummary() {
+    const risk = document.getElementById('risk-profile').value;
+    const scen = document.getElementById('scenario').value;
+    const flagLabels = [];
+    if (flags.no_insurance)   flagLabels.push('No Insurance Advice');
+    if (flags.no_trauma)      flagLabels.push('No Trauma Advice');
+    if (flags.no_salsac)      flagLabels.push('No Salary Sacrifice');
+    if (flags.insurance_only) flagLabels.push('Insurance-Only Client');
+    const flagsStr = flagLabels.length ? flagLabels.join(', ') : '—';
+    const goalCount = ['goal_super','goal_insurance','goal_salary_sacrifice','goal_estate_planning','goal_retirement']
+      .filter(id => document.getElementById(id) && document.getElementById(id).value.trim()).length;
+
+    document.getElementById('summary-box').innerHTML = `
+      <div style="display:grid;grid-template-columns:160px 1fr;row-gap:8px;">
+        <div style="color:var(--text-muted);">Fact Finder</div><div><strong>${files.ff ? files.ff.name : '—'}</strong></div>
+        <div style="color:var(--text-muted);">SOA Template</div><div><strong>${files.soa ? files.soa.name : '—'}</strong></div>
+        <div style="color:var(--text-muted);">KYC Note</div><div><strong>${files.kyc ? files.kyc.name : '<em style="font-style:normal;color:var(--text-soft);">not provided</em>'}</strong></div>
+        <div style="color:var(--text-muted);">Risk profile</div><div><strong>${risk || '—'}</strong></div>
+        <div style="color:var(--text-muted);">Scenario</div><div><strong>${scen || '—'}</strong></div>
+        <div style="color:var(--text-muted);">Section toggles</div><div><strong>${flagsStr}</strong></div>
+        <div style="color:var(--text-muted);">Goals to insert</div><div><strong>${goalCount} of 5</strong> (rest stay raw for adviser)</div>
+      </div>`;
+  }
+
+  // ── Form-control wiring ──
   function onSelectChange(sel) {
     sel.classList.toggle('has-value', !!sel.value);
-    checkReady();
+    refreshStep2();
   }
   function toggleCheckbox(el) {
     const flag = el.dataset.flag;
@@ -743,27 +659,7 @@
     el.classList.toggle('active', flags[flag]);
   }
 
-  // ── Validation ──
-  function checkReady() {
-    const risk = document.getElementById('risk-profile').value;
-    const scenario = document.getElementById('scenario').value;
-    const ready = files.ff && files.soa && risk && scenario;
-    document.getElementById('btn-run').disabled = !ready;
-    if (files.ff && files.soa) setPipStep(2, 'active');
-    if (ready) setPipStep(2, 'done');
-  }
-
-  // ── Pipeline ──
-  function setPipStep(num, state) {
-    for (let i = 1; i <= 5; i++) {
-      const el = document.getElementById('pip-' + i);
-      el.classList.remove('active', 'done');
-    }
-    for (let i = 1; i < num; i++) document.getElementById('pip-' + i).classList.add('done');
-    if (num <= 5) document.getElementById('pip-' + num).classList.add('active');
-  }
-
-  // ── Log helpers ──
+  // ── Logging helpers (Step 3) ──
   function addLog(text, state = '') {
     const c = document.getElementById('log-lines');
     const line = document.createElement('div');
@@ -778,65 +674,63 @@
   }
   function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-  // ── Run Agent ──
+  // ── Generate ──
   async function runAgent() {
-    document.getElementById('btn-run').disabled = true;
-    document.getElementById('error-msg').classList.remove('visible');
+    const btn = document.getElementById('btn-generate');
+    btn.disabled = true;
+    document.getElementById('step3-error').classList.remove('visible');
     document.getElementById('result-panel').classList.remove('visible');
     document.getElementById('result-panel').innerHTML = '';
     document.getElementById('log-lines').innerHTML = '';
     document.getElementById('status-panel').classList.add('visible');
     document.getElementById('spinner').classList.add('visible');
 
-    setPipStep(3, 'active');
     const l1 = addLog('Reading Fact Finder...', 'active');
-    await delay(400);
+    await delay(300);
     updateLog(l1, `✓ Fact Finder loaded — ${files.ff.name}`, 'done');
 
     const l2 = addLog('Extracting client data fields...', 'active');
-    await delay(300);
-
-    setPipStep(4, 'active');
+    await delay(200);
     const l3 = addLog('Populating SOA template...', 'active');
 
     const formData = new FormData();
     formData.append('fact_finder', files.ff);
     formData.append('soa_template', files.soa);
     formData.append('risk_profile', document.getElementById('risk-profile').value);
-    formData.append('scenario', document.getElementById('scenario').value);
-    formData.append('no_insurance', flags.no_insurance ? 'true' : 'false');
-    formData.append('no_trauma', flags.no_trauma ? 'true' : 'false');
-    formData.append('no_salsac', flags.no_salsac ? 'true' : 'false');
+    formData.append('scenario',     document.getElementById('scenario').value);
+    formData.append('no_insurance',   flags.no_insurance   ? 'true' : 'false');
+    formData.append('no_trauma',      flags.no_trauma      ? 'true' : 'false');
+    formData.append('no_salsac',      flags.no_salsac      ? 'true' : 'false');
     formData.append('insurance_only', flags.insurance_only ? 'true' : 'false');
+    formData.append('goal_super',             document.getElementById('goal_super')             ? document.getElementById('goal_super').value             : '');
+    formData.append('goal_insurance',         document.getElementById('goal_insurance')         ? document.getElementById('goal_insurance').value         : '');
+    formData.append('goal_salary_sacrifice',  document.getElementById('goal_salary_sacrifice')  ? document.getElementById('goal_salary_sacrifice').value  : '');
+    formData.append('goal_estate_planning',   document.getElementById('goal_estate_planning')   ? document.getElementById('goal_estate_planning').value   : '');
+    formData.append('goal_retirement',        document.getElementById('goal_retirement')        ? document.getElementById('goal_retirement').value        : '');
 
     try {
       const response = await fetch('/process', { method: 'POST', body: formData });
-
       if (!response.ok) {
         const err = await response.json();
         updateLog(l2, '✗ Data extraction failed', 'error');
         updateLog(l3, '✗ Processing aborted', 'error');
         document.getElementById('spinner').classList.remove('visible');
-        document.getElementById('error-msg').textContent = err.error || 'Unknown error';
-        document.getElementById('error-msg').classList.add('visible');
-        document.getElementById('btn-run').disabled = false;
+        const e3 = document.getElementById('step3-error');
+        e3.textContent = err.error || 'Unknown error';
+        e3.classList.add('visible');
+        btn.disabled = false;
         return;
       }
-
       updateLog(l2, '✓ Client data extracted successfully', 'done');
       updateLog(l3, '✓ SOA template populated — red font applied', 'done');
-
       const l4 = addLog('Applying conditional section logic...', 'active');
       await delay(200);
       updateLog(l4, '✓ Conditional blocks processed', 'done');
-
-      setPipStep(5, 'active');
       const l5 = addLog('Finalising document...', 'active');
       await delay(200);
       updateLog(l5, '✓ Draft SOA ready for download', 'done');
 
       document.getElementById('spinner').classList.remove('visible');
-      setPipStep(5, 'done');
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
@@ -862,12 +756,13 @@
     } catch (err) {
       updateLog(l3, '✗ Network error — is the server running?', 'error');
       document.getElementById('spinner').classList.remove('visible');
-      document.getElementById('error-msg').textContent = 'Connection error — please refresh the page and try again. If the problem persists, check the Render logs.';
-      document.getElementById('error-msg').classList.add('visible');
+      const e3 = document.getElementById('step3-error');
+      e3.textContent = 'Connection error — please refresh the page and try again.';
+      e3.classList.add('visible');
     }
-
-    document.getElementById('btn-run').disabled = false;
+    btn.disabled = false;
   }
 </script>
+
 </body>
 </html>
