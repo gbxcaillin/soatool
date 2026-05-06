@@ -95,9 +95,9 @@
   .step-title { font-family: 'Ubuntu', sans-serif; font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 8px; letter-spacing: -0.3px; }
   .step-desc { font-family: 'General Sans', sans-serif; font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6; }
 
-  /* ── Upload grid ── */
-  .upload-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 28px; }
-  @media (max-width: 720px) { .upload-grid { grid-template-columns: 1fr; } }
+  /* ── Upload grid (2 × 2 = FF, SOA, KYC, OFA) ── */
+  .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 28px; }
+  @media (max-width: 580px) { .upload-grid { grid-template-columns: 1fr; } }
   .upload-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px 20px 22px; cursor: pointer; transition: all 0.2s ease; position: relative; overflow: hidden; box-shadow: var(--shadow-sm); }
   .upload-card.optional { border-style: dashed; }
   .upload-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--raspberry); transform: scaleX(0); transform-origin: left; transition: transform 0.25s ease; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
@@ -270,7 +270,7 @@
   <!-- ───────────── Step 1: Upload ───────────── -->
   <section class="step visible" id="step-1">
     <div class="step-title">Upload source files</div>
-    <div class="step-desc">Fact Finder and SOA Template are required. The KYC File Note is optional — when supplied, the agent extracts the client goals and pre-fills the next step.</div>
+    <div class="step-desc">Fact Finder and SOA Template are required. The KYC File Note pre-fills client goals and risk profile. The Ongoing Fee Agreement template, if provided, is generated alongside the SOA and the two are downloaded together as a zip.</div>
 
     <div class="upload-grid">
 
@@ -320,6 +320,22 @@
         <div class="card-hint">Pre-fills goals + risk profile · .docx</div>
         <div class="card-filename" id="kyc-name">—</div>
         <input type="file" id="input-kyc" accept=".docx" onchange="handleFile('kyc',this)">
+      </div>
+
+      <div class="upload-card optional" id="card-ofa" onclick="triggerUpload('ofa')"
+           ondragover="handleDrag(event,'ofa')" ondragleave="clearDrag('ofa')" ondrop="handleDrop(event,'ofa')">
+        <button class="card-remove" onclick="removeFile(event,'ofa')">×</button>
+        <svg class="card-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="3" width="22" height="30" rx="2" stroke="#F50D74" stroke-width="1.4" stroke-dasharray="3 2"/>
+          <path d="M8 11h14M8 16h14M8 21h10" stroke="#F50D74" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="24" cy="26" r="4" stroke="#18A672" stroke-width="1.4"/>
+          <path d="M22 26l1.6 1.6L26 25" stroke="#18A672" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="card-type muted">Optional</div>
+        <div class="card-title">Ongoing Fee Agreement</div>
+        <div class="card-hint">Generated alongside the SOA · .docx</div>
+        <div class="card-filename" id="ofa-name">—</div>
+        <input type="file" id="input-ofa" accept=".docx" onchange="handleFile('ofa',this)">
       </div>
 
     </div>
@@ -467,7 +483,7 @@
 
 <script>
   // ── State ──
-  const files = { ff: null, soa: null, kyc: null };
+  const files = { ff: null, soa: null, kyc: null, ofa: null };
   const flags = { no_insurance: false, no_trauma: false, no_salsac: false, insurance_only: false };
   let kycData = null;
   let currentStep = 1;
@@ -649,15 +665,19 @@
     const goalCount = ['goal_super','goal_insurance','goal_salary_sacrifice','goal_estate_planning','goal_retirement']
       .filter(id => document.getElementById(id) && document.getElementById(id).value.trim()).length;
 
+    const notProvided = '<em style="font-style:normal;color:var(--text-soft);">not provided</em>';
+    const docsToGenerate = files.ofa ? '<strong>SOA + Ongoing Fee Agreement</strong> (downloaded together as a .zip)' : '<strong>SOA only</strong>';
     document.getElementById('summary-box').innerHTML = `
       <div style="display:grid;grid-template-columns:160px 1fr;row-gap:8px;">
         <div style="color:var(--text-muted);">Fact Finder</div><div><strong>${files.ff ? files.ff.name : '—'}</strong></div>
         <div style="color:var(--text-muted);">SOA Template</div><div><strong>${files.soa ? files.soa.name : '—'}</strong></div>
-        <div style="color:var(--text-muted);">KYC Note</div><div><strong>${files.kyc ? files.kyc.name : '<em style="font-style:normal;color:var(--text-soft);">not provided</em>'}</strong></div>
+        <div style="color:var(--text-muted);">KYC Note</div><div><strong>${files.kyc ? files.kyc.name : notProvided}</strong></div>
+        <div style="color:var(--text-muted);">OFA Template</div><div><strong>${files.ofa ? files.ofa.name : notProvided}</strong></div>
         <div style="color:var(--text-muted);">Risk profile</div><div><strong>${risk || '—'}</strong></div>
         <div style="color:var(--text-muted);">Scenario</div><div><strong>${scen || '—'}</strong></div>
         <div style="color:var(--text-muted);">Section toggles</div><div><strong>${flagsStr}</strong></div>
         <div style="color:var(--text-muted);">Goals to insert</div><div><strong>${goalCount} of 5</strong> (rest stay raw for adviser)</div>
+        <div style="color:var(--text-muted);">Output</div><div>${docsToGenerate}</div>
       </div>`;
   }
 
@@ -709,6 +729,7 @@
     const formData = new FormData();
     formData.append('fact_finder', files.ff);
     formData.append('soa_template', files.soa);
+    if (files.ofa) formData.append('ofa_template', files.ofa);
     formData.append('risk_profile', document.getElementById('risk-profile').value);
     formData.append('scenario',     document.getElementById('scenario').value);
     formData.append('no_insurance',   flags.no_insurance   ? 'true' : 'false');
@@ -757,12 +778,17 @@
 
       const panel = document.getElementById('result-panel');
       panel.classList.add('visible');
+      const isBundle = a.download.toLowerCase().endsWith('.zip');
+      const label = isBundle ? '✓ Documents Bundle Downloaded' : '✓ Draft SOA Downloaded';
+      const meta  = isBundle
+        ? 'Zip contains the SOA + OFA · All auto-populated fields are in red · Pending adviser review'
+        : 'All auto-populated fields are in red · Pending adviser review';
       panel.innerHTML = `
         <div class="result-box">
           <div class="result-info">
-            <div class="result-label">✓ Draft SOA Downloaded</div>
+            <div class="result-label">${label}</div>
             <div class="result-name">${a.download}</div>
-            <div class="result-meta">All auto-populated fields are in red · Pending adviser review</div>
+            <div class="result-meta">${meta}</div>
           </div>
         </div>`;
 

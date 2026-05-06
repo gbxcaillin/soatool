@@ -26,8 +26,9 @@ from docx import Document
 from docx.shared import RGBColor, Pt
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
-from datetime import date
+from datetime import date, timedelta
 import io
+import zipfile
 import traceback
 import re
 import copy
@@ -526,6 +527,28 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
     # ── Current Date ──
     current_date = date.today().strftime("%d %B %Y")
 
+    # ── Ongoing Fee Agreement (OFA) dates ──
+    # Presentation date = today + 2 days (when the OFA is presented to the client).
+    # Reference date    = presentation date + 12 months (renewal review).
+    # Arrangement end   = reference date + 150 days (consent expiry, per the OFA template body).
+    # The placeholder text in the OFA template says '+ 5 months' for the second date,
+    # but the body and the spec confirm 150 days — using 150 days here.
+    import calendar as _cal
+    def _add_months(d, months):
+        new_month_idx = d.month - 1 + months
+        new_year = d.year + new_month_idx // 12
+        new_month = new_month_idx % 12 + 1
+        new_day = min(d.day, _cal.monthrange(new_year, new_month)[1])
+        return date(new_year, new_month, new_day)
+
+    _today = date.today()
+    presentation_date    = _today + timedelta(days=2)
+    reference_date       = _add_months(presentation_date, 12)
+    arrangement_end_date = reference_date + timedelta(days=150)
+    DATE_FMT_LONG = "%d %B %Y"
+    reference_date_str       = reference_date.strftime(DATE_FMT_LONG)
+    arrangement_end_date_str = arrangement_end_date.strftime(DATE_FMT_LONG)
+
     # ── Risk Profile (from UI selection) ──
     current_risk_profile = risk_profile  # passed in from form
 
@@ -569,6 +592,9 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
         "{{CurrentBalance}}":                    current_balance,
         "{{CurrentAge}}":                        str(age) if age else "",
         "{{CurrentDate}}":                       current_date,
+        # Ongoing Fee Agreement date placeholders — exact strings (with leading spaces) per the OFA template.
+        "{{ Presentation date + 12 months}}":    reference_date_str,
+        "{{ Reference date + 5 months}}":        arrangement_end_date_str,
         "{{AnnualisedSalarySacrificeAmount}}":   annualised_salary_sacrifice,
         "{{BindingDeathNominee}}":               binding_death_nominee,
         "{{CurrentRiskProfile}}":                current_risk_profile,
@@ -1340,6 +1366,11 @@ def process():
 
         ff_bytes       = request.files["fact_finder"].read()
         template_bytes = request.files["soa_template"].read()
+        # OFA template is optional. If supplied (non-empty filename), generate the OFA too
+        # and bundle both files into a single zip for download.
+        ofa_bytes = None
+        if "ofa_template" in request.files and request.files["ofa_template"].filename:
+            ofa_bytes = request.files["ofa_template"].read()
 
         # Read fact finder then free its bytes
         data, conditionals = read_fact_finder(
@@ -1352,19 +1383,29 @@ def process():
         )
         del ff_bytes
 
-        # Process SOA (template_bytes freed inside process_soa)
-        out = process_soa(template_bytes, data, conditionals)
-
         client_name = data.get("{{ClientFullName}}", "Client")
-        today = date.today().strftime("%Y%m%d")
-        filename = f"SOA_Draft_{client_name.replace(' ','_')}_{today}.docx"
+        client_slug = client_name.replace(" ", "_") or "Client"
+        today_str   = date.today().strftime("%Y%m%d")
+        soa_name    = f"SOA_Draft_{client_slug}_{today_str}.docx"
+        ofa_name    = f"OFA_Draft_{client_slug}_{today_str}.docx"
+        DOCX_MIME   = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
-        return send_file(
-            out,
-            as_attachment=True,
-            download_name=filename,
-            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        )
+        # Generate the SOA (template_bytes is freed inside process_soa)
+        soa_out = process_soa(template_bytes, data, conditionals)
+
+        if ofa_bytes is None:
+            # Single-file response — preserves the legacy behavior.
+            return send_file(soa_out, as_attachment=True, download_name=soa_name, mimetype=DOCX_MIME)
+
+        # Both templates supplied: process the OFA as well, then zip both.
+        ofa_out = process_soa(ofa_bytes, data, conditionals)
+        zip_buf = io.BytesIO()
+        with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr(soa_name, soa_out.getvalue())
+            zf.writestr(ofa_name, ofa_out.getvalue())
+        zip_buf.seek(0)
+        bundle_name = f"Documents_{client_slug}_{today_str}.zip"
+        return send_file(zip_buf, as_attachment=True, download_name=bundle_name, mimetype="application/zip")
 
     except KeyError as e:
         return jsonify({"error": f"Fact Finder tab not found or unexpected structure: {e}"}), 400
