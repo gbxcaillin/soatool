@@ -77,12 +77,153 @@ FUND_COLS = [2, 4, 6, 8, 10]
 
 
 # ─────────────────────────────────────────────
+# KYC FILE NOTE READER
+# ─────────────────────────────────────────────
+
+def read_kyc_note(docx_bytes):
+    """
+    Parse a KYC File Note (.docx) and return structured data the SOA agent can use:
+        - risk_profile          : str  (from Paraplanning Request → Risk Profile)
+        - scope                 : dict (super/insurance/salary_sacrifice/estate_planning -> 'in' | 'out')
+        - goals                 : dict (5 verbatim goal paragraphs keyed by section)
+        - meta                  : dict (client_name, adviser, meeting_date, platform, model)
+
+    Relies on the standard KYC heading structure:
+        Heading 1: 'Paraplanning Request', 'Client Goals Summary', 'Risk Profile Questions...'
+        Heading 2: 'Superannuation Goals — Scoped in/out [limited to ...]'
+                   'Insurance Goals — Scoped in/out [limited to ...]'
+                   'Super Contribution Goals — Scoped in/out [limited to ...]'
+                   'Estate Planning Goals — Scoped in/out [limited to ...]'
+                   'Future Considerations — Retirement Goal'
+    """
+    from docx import Document as _DocxDocument
+    doc = _DocxDocument(io.BytesIO(docx_bytes))
+
+    # Walk paragraphs once, building a flat list of (level, heading, body_text) sections.
+    # level 0 = pre-heading text, level 1/2 = real headings.
+    sections = []
+    current = {"level": 0, "heading": "", "text": ""}
+    sections.append(current)
+
+    def _norm_dashes(s):
+        # Normalise unicode dashes so 'Scoped in' detection works regardless of em/en/hyphen
+        return s.replace("—", "-").replace("–", "-").replace("−", "-")
+
+    for p in doc.paragraphs:
+        text = p.text.strip()
+        style_name = (p.style.name if p.style else "").strip()
+        is_h1 = style_name.startswith("Heading 1")
+        is_h2 = style_name.startswith("Heading 2")
+        if is_h1 or is_h2:
+            current = {"level": 1 if is_h1 else 2, "heading": text, "text": ""}
+            sections.append(current)
+        elif text:
+            if current["text"]:
+                current["text"] += "\n\n"
+            current["text"] += text
+
+    def find_section(*keywords, level=None):
+        """First section whose heading contains all keywords (case-insensitive)."""
+        for s in sections:
+            h = s["heading"].lower()
+            if all(k.lower() in h for k in keywords) and (level is None or s["level"] == level):
+                return s
+        return None
+
+    # ── Paraplanning Request: extract Platform, Risk Profile, Model ──
+    # Try the heading-anchored section first, but fall back to scanning the full
+    # document text — some KYC notes use plain bold rather than Heading 1 for
+    # 'Paraplanning Request'. The 'Platform:'/'Risk Profile:'/'Model:' labels are
+    # distinctive enough that a full-doc scan won't false-match.
+    risk_profile = ""
+    platform     = ""
+    model        = ""
+    full_doc_text = "\n".join(p.text for p in doc.paragraphs)
+    paraplanning = find_section("paraplanning")
+    search_body = paraplanning["text"] if paraplanning else full_doc_text
+    m = re.search(r"^\s*Platform:\s*(.+?)\s*$",       search_body, re.IGNORECASE | re.MULTILINE)
+    if m: platform = m.group(1).strip()
+    m = re.search(r"^\s*Risk Profile:\s*(.+?)\s*$",   search_body, re.IGNORECASE | re.MULTILINE)
+    if m: risk_profile = m.group(1).strip()
+    m = re.search(r"^\s*Model:\s*(.+?)\s*$",          search_body, re.IGNORECASE | re.MULTILINE)
+    if m: model = m.group(1).strip()
+    # Final fallback: if the section-scoped search didn't find them, sweep the whole doc
+    if paraplanning and not (risk_profile and platform and model):
+        if not platform:
+            m = re.search(r"^\s*Platform:\s*(.+?)\s*$", full_doc_text, re.IGNORECASE | re.MULTILINE)
+            if m: platform = m.group(1).strip()
+        if not risk_profile:
+            m = re.search(r"^\s*Risk Profile:\s*(.+?)\s*$", full_doc_text, re.IGNORECASE | re.MULTILINE)
+            if m: risk_profile = m.group(1).strip()
+        if not model:
+            m = re.search(r"^\s*Model:\s*(.+?)\s*$", full_doc_text, re.IGNORECASE | re.MULTILINE)
+            if m: model = m.group(1).strip()
+
+    # ── Goal sections + scope tags ──
+    # Heading examples: 'Superannuation Goals – Scoped in', 'Super Contribution Goals – Scoped out',
+    # 'Estate Planning Goals – Scoped in limited to beneficiaries'.
+    GOAL_KEYS = [
+        # (key,                heading_keywords_to_match)
+        ("super",              ["superannuation goals"]),
+        ("insurance",          ["insurance goals"]),
+        ("salary_sacrifice",   ["super contribution goals"]),
+        ("estate_planning",    ["estate planning goals"]),
+        ("retirement",         ["retirement goal"]),  # under 'Future Considerations'
+    ]
+
+    goals = {}
+    scope = {}
+    for key, keywords in GOAL_KEYS:
+        sect = None
+        for kw in keywords:
+            sect = find_section(kw, level=2)
+            if sect: break
+        if sect:
+            goals[key] = sect["text"].strip()
+            heading_norm = _norm_dashes(sect["heading"]).lower()
+            if "scoped out" in heading_norm:
+                scope[key] = "out"
+            elif "scoped in" in heading_norm:
+                scope[key] = "in"
+            else:
+                scope[key] = "in"   # retirement section has no scope tag; treat as 'in'
+        else:
+            goals[key] = ""
+            scope[key] = "in"
+
+    # ── File Note metadata (client, adviser, date) — informational only for now ──
+    client_name  = ""
+    adviser      = ""
+    meeting_date = ""
+    m = re.search(r"^\s*Client:\s*(.+?)\s*$",  full_doc_text, re.IGNORECASE | re.MULTILINE)
+    if m: client_name = m.group(1).strip()
+    m = re.search(r"^\s*Adviser:\s*(.+?)\s*$", full_doc_text, re.IGNORECASE | re.MULTILINE)
+    if m: adviser = m.group(1).strip()
+    m = re.search(r"^\s*Date:\s*(.+?)\s*$",    full_doc_text, re.IGNORECASE | re.MULTILINE)
+    if m: meeting_date = m.group(1).strip()
+
+    return {
+        "risk_profile": risk_profile,
+        "scope":        scope,
+        "goals":        goals,
+        "meta": {
+            "client_name":  client_name,
+            "adviser":      adviser,
+            "meeting_date": meeting_date,
+            "platform":     platform,
+            "model":        model,
+        },
+    }
+
+
+# ─────────────────────────────────────────────
 # FACT FINDER READER
 # ─────────────────────────────────────────────
 
 def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
                      no_trauma_flag=False, no_salsac_flag=False,
-                     insurance_only_flag=False, scenario=""):
+                     insurance_only_flag=False, scenario="",
+                     goal_overrides=None):
     """
     Read the Fact Finder xlsx and return:
         - data dict  { "{{CODE}}": "value" }
@@ -94,6 +235,10 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
         no_salsac_flag       -> drives {{DeleteIfNoSalarySacrificeAdvice}}
         insurance_only_flag  -> drives {{DeleteIfInsuranceOnlyClient}}
         scenario             -> "1".."6"; keeps {{ScenarioN}} block, deletes the other five
+        goal_overrides       -> optional dict of goal text from the KYC note, keyed by:
+                                'super', 'insurance', 'salary_sacrifice', 'estate_planning', 'retirement'.
+                                When a key has a non-empty value, the corresponding {{*Goal}} placeholder
+                                is replaced in the SOA. Empty / missing keys leave the placeholder raw.
     """
     from python_calamine import CalamineWorkbook
     cal_wb   = CalamineWorkbook.from_filelike(io.BytesIO(xlsx_bytes))
@@ -482,6 +627,22 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
     for n in range(1, 7):
         conditionals[f"DeleteScenario{n}"] = (scenario != "" and scenario != str(n))
 
+    # ── Goal overrides from KYC note ──
+    # Only inject goals that have non-empty text. Codes for empty goals stay raw
+    # (matching legacy adviser-completed behavior).
+    if goal_overrides:
+        GOAL_CODE_MAP = {
+            "super":            "{{SuperGoal}}",
+            "insurance":        "{{InsuranceGoal}}",
+            "salary_sacrifice": "{{SalarySacrificeGoal}}",
+            "estate_planning":  "{{EstatePlanningGoal}}",
+            "retirement":       "{{RetirementGoal}}",
+        }
+        for k, code in GOAL_CODE_MAP.items():
+            v = (goal_overrides.get(k) or "").strip()
+            if v:
+                data[code] = v
+
     return data, conditionals
 
 
@@ -794,16 +955,21 @@ def process_soa(template_bytes, data, conditionals):
     del template_bytes, buf
     gc.collect()
 
+    # Build a per-call unmapped set: any code that ALSO has a non-empty value in
+    # the data dict (e.g. a goal injected from the KYC note) is removed from the
+    # unmapped set so it gets replaced rather than left raw.
+    runtime_unmapped = UNMAPPED_CODES - {k for k, v in data.items() if v}
+
     # Step 1: Apply conditional block deletions
     apply_conditional_deletions(doc, conditionals)
 
     # Step 2: Replace codes in body paragraphs
     for paragraph in doc.paragraphs:
-        process_paragraph_text(paragraph, data, UNMAPPED_CODES)
+        process_paragraph_text(paragraph, data, runtime_unmapped)
 
     # Step 3: Replace codes in tables
     for table in doc.tables:
-        process_table(table, data, UNMAPPED_CODES)
+        process_table(table, data, runtime_unmapped)
 
     # Step 4: Replace codes in headers and footers
     for section in doc.sections:
@@ -812,9 +978,9 @@ def process_soa(template_bytes, data, conditionals):
                     section.first_page_header, section.first_page_footer]:
             if hdr:
                 for paragraph in hdr.paragraphs:
-                    process_paragraph_text(paragraph, data, UNMAPPED_CODES)
+                    process_paragraph_text(paragraph, data, runtime_unmapped)
                 for table in hdr.tables:
-                    process_table(table, data, UNMAPPED_CODES)
+                    process_table(table, data, runtime_unmapped)
 
     out = io.BytesIO()
     doc.save(out)
@@ -1084,6 +1250,60 @@ def tool():
         return f.read()
 
 
+@app.route("/api/extract", methods=["POST"])
+def api_extract():
+    """
+    Step 1 of the wizard: parse the KYC note (and optionally peek at the FF) to
+    return suggested UI defaults for Step 2. The FF and SOA template are NOT
+    persisted here — the browser keeps the File objects and re-sends them on /process.
+
+    Request: multipart form with optional 'kyc_note' file (.docx).
+    Response JSON:
+        {
+          "kyc": { ... read_kyc_note output ... } or null,
+          "suggested": {
+            "risk_profile": "...",
+            "no_insurance":   bool,
+            "no_salsac":      bool,
+            "no_trauma":      bool,
+            "insurance_only": bool,
+          },
+          "conflicts": []     # placeholder for future FF↔KYC conflict detection
+        }
+    """
+    if not logged_in():
+        return jsonify({"error": "Not authenticated"}), 401
+    try:
+        kyc_data = None
+        if "kyc_note" in request.files and request.files["kyc_note"].filename:
+            kyc_bytes = request.files["kyc_note"].read()
+            kyc_data = read_kyc_note(kyc_bytes)
+            del kyc_bytes
+
+        suggested = {
+            "risk_profile":   "",
+            "no_insurance":   False,
+            "no_salsac":      False,
+            "no_trauma":      False,
+            "insurance_only": False,
+        }
+        if kyc_data:
+            suggested["risk_profile"] = kyc_data.get("risk_profile", "")
+            scope = kyc_data.get("scope", {})
+            # Map scope tags to UI-checkbox defaults. 'in' = leave unticked, 'out' = pre-tick.
+            suggested["no_insurance"] = (scope.get("insurance") == "out")
+            suggested["no_salsac"]    = (scope.get("salary_sacrifice") == "out")
+            # No KYC scope tag exists for trauma or insurance-only; adviser sets manually.
+
+        return jsonify({
+            "kyc":        kyc_data,
+            "suggested":  suggested,
+            "conflicts":  [],   # Phase 3b: FF vs KYC conflict detection
+        })
+    except Exception as e:
+        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
+
+
 @app.route("/process", methods=["POST"])
 def process():
     if not logged_in():
@@ -1100,6 +1320,16 @@ def process():
         no_trauma      = request.form.get("no_trauma", "false").lower() == "true"
         no_salsac      = request.form.get("no_salsac", "false").lower() == "true"
         insurance_only = request.form.get("insurance_only", "false").lower() == "true"
+
+        # Optional goal text from KYC note (or adviser-edited at the review step).
+        # Empty values mean "leave the placeholder raw for adviser to complete".
+        goal_overrides = {
+            "super":            request.form.get("goal_super", "").strip(),
+            "insurance":        request.form.get("goal_insurance", "").strip(),
+            "salary_sacrifice": request.form.get("goal_salary_sacrifice", "").strip(),
+            "estate_planning":  request.form.get("goal_estate_planning", "").strip(),
+            "retirement":       request.form.get("goal_retirement", "").strip(),
+        }
 
         if not risk_profile:
             return jsonify({"error": "Risk profile must be selected"}), 400
@@ -1118,6 +1348,7 @@ def process():
             no_salsac_flag=no_salsac,
             insurance_only_flag=insurance_only,
             scenario=scenario,
+            goal_overrides=goal_overrides,
         )
         del ff_bytes
 
