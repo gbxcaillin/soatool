@@ -538,8 +538,21 @@
         fd.append('kyc_note', files.kyc);
         const r = await fetch('/api/extract', { method: 'POST', body: fd });
         if (!r.ok) {
-          const err = await r.json();
-          showStep1Error(err.error || 'Failed to parse KYC note');
+          // Server returned non-2xx. Try to read JSON error; fall back to a status-aware message.
+          let msg;
+          try {
+            const err = await r.json();
+            msg = err.error || `Server error ${r.status}`;
+          } catch (_) {
+            if (r.status === 405 || r.status === 404) {
+              msg = `Server returned ${r.status} — the /api/extract endpoint isn't available. ` +
+                    `The latest app.py probably hasn't deployed yet. ` +
+                    `Check the Render dashboard's Events tab and confirm both app.py and index.html are in the latest deploy.`;
+            } else {
+              msg = `Server returned ${r.status} with a non-JSON response. Check Render logs.`;
+            }
+          }
+          showStep1Error(msg);
           btn.disabled = false;
           return;
         }
@@ -547,7 +560,7 @@
         kycData = payload.kyc;
         applyKycToReview(kycData, payload.suggested);
       } catch (err) {
-        showStep1Error('Network error parsing KYC: ' + err);
+        showStep1Error('Network error contacting /api/extract: ' + err);
         btn.disabled = false;
         return;
       }
