@@ -549,6 +549,13 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
     reference_date_str       = reference_date.strftime(DATE_FMT_LONG)
     arrangement_end_date_str = arrangement_end_date.strftime(DATE_FMT_LONG)
 
+    # ── Ongoing Advice Fee ({{zzz}}) ──
+    # 1.1% of total super balance, capped at $10,000 p.a.
+    # Output is the bare number "X,XXX.XX" — the OFA template already has '$' before the placeholder.
+    _total_super = sum_funds(94)
+    _ongoing_fee = min(_total_super * 0.011, 10_000.0)
+    ongoing_fee_str = f"{_ongoing_fee:,.2f}" if _ongoing_fee > 0 else ""
+
     # ── Risk Profile (from UI selection) ──
     current_risk_profile = risk_profile  # passed in from form
 
@@ -595,6 +602,8 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
         # Ongoing Fee Agreement date placeholders — exact strings (with leading spaces) per the OFA template.
         "{{ Presentation date + 12 months}}":    reference_date_str,
         "{{ Reference date + 5 months}}":        arrangement_end_date_str,
+        # OFA ongoing advice fee — 1.1% of total super balance, capped at $10,000 p.a.
+        "{{zzz}}":                               ongoing_fee_str,
         "{{AnnualisedSalarySacrificeAmount}}":   annualised_salary_sacrifice,
         "{{BindingDeathNominee}}":               binding_death_nominee,
         "{{CurrentRiskProfile}}":                current_risk_profile,
@@ -696,7 +705,6 @@ UNMAPPED_CODES = {
     "{{SalarySacrificeAmount}}",
     "{{SalarySacrificeFrequency}}",
     "{{NetTaxSavings}}",
-    "{{zzz}}",
     "{{SuperGoal}}",
     "{{InsuranceGoal}}",
     "{{SalarySacrificeGoal}}",
