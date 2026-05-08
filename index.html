@@ -290,22 +290,6 @@
         <input type="file" id="input-ff" accept=".xlsx,.xls" onchange="handleFile('ff',this)">
       </div>
 
-      <div class="upload-card" id="card-soa" onclick="triggerUpload('soa')"
-           ondragover="handleDrag(event,'soa')" ondragleave="clearDrag('soa')" ondrop="handleDrop(event,'soa')">
-        <button class="card-remove" onclick="removeFile(event,'soa')">×</button>
-        <svg class="card-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="4" y="3" width="22" height="30" rx="2" stroke="#F50D74" stroke-width="1.4"/>
-          <path d="M8 9h14M8 14h14M8 19h14M8 24h14M8 29h8" stroke="rgba(245,13,116,0.35)" stroke-width="1.4" stroke-linecap="round"/>
-          <path d="M26 20l4 4-4 4" stroke="#F50D74" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M20 24h10" stroke="#F50D74" stroke-width="1.4" stroke-linecap="round"/>
-        </svg>
-        <div class="card-type">Required</div>
-        <div class="card-title">SOA Template</div>
-        <div class="card-hint">Document with {{placeholders}} · .docx</div>
-        <div class="card-filename" id="soa-name">—</div>
-        <input type="file" id="input-soa" accept=".docx" onchange="handleFile('soa',this)">
-      </div>
-
       <div class="upload-card optional" id="card-kyc" onclick="triggerUpload('kyc')"
            ondragover="handleDrag(event,'kyc')" ondragleave="clearDrag('kyc')" ondrop="handleDrop(event,'kyc')">
         <button class="card-remove" onclick="removeFile(event,'kyc')">×</button>
@@ -320,6 +304,22 @@
         <div class="card-hint">Pre-fills goals + risk profile · .docx</div>
         <div class="card-filename" id="kyc-name">—</div>
         <input type="file" id="input-kyc" accept=".docx" onchange="handleFile('kyc',this)">
+      </div>
+
+      <div class="upload-card" id="card-soa" onclick="triggerUpload('soa')"
+           ondragover="handleDrag(event,'soa')" ondragleave="clearDrag('soa')" ondrop="handleDrop(event,'soa')">
+        <button class="card-remove" onclick="removeFile(event,'soa')">×</button>
+        <svg class="card-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="3" width="22" height="30" rx="2" stroke="#F50D74" stroke-width="1.4"/>
+          <path d="M8 9h14M8 14h14M8 19h14M8 24h14M8 29h8" stroke="rgba(245,13,116,0.35)" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M26 20l4 4-4 4" stroke="#F50D74" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M20 24h10" stroke="#F50D74" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+        <div class="card-type">Required</div>
+        <div class="card-title">SOA Template</div>
+        <div class="card-hint">Document with {{placeholders}} · .docx</div>
+        <div class="card-filename" id="soa-name">—</div>
+        <input type="file" id="input-soa" accept=".docx" onchange="handleFile('soa',this)">
       </div>
 
       <div class="upload-card optional" id="card-ofa" onclick="triggerUpload('ofa')"
