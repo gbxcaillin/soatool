@@ -392,6 +392,21 @@
           <div class="field-hint">Required — keeps the matching scenario block, deletes the others</div>
         </div>
       </div>
+
+      <div class="panel-grid" style="margin-top:18px;">
+        <div class="field">
+          <div class="field-label">Rollover Type</div>
+          <select class="styled-select" id="rollover-type" onchange="onSelectChange(this)">
+            <option value="">— Select rollover type —</option>
+            <option value="Full">Full Rollover</option>
+            <option value="Partial">Partial Rollover</option>
+          </select>
+          <div class="field-hint">Determines which rollover paragraph is kept in Recommendation 1. Leave unselected to keep both for manual edit.</div>
+        </div>
+        <div class="field">
+          <!-- empty slot, reserved for future option -->
+        </div>
+      </div>
     </div>
 
     <!-- Section toggles -->
@@ -675,6 +690,7 @@
         <div style="color:var(--text-muted);">OFA Template</div><div><strong>${files.ofa ? files.ofa.name : notProvided}</strong></div>
         <div style="color:var(--text-muted);">Risk profile</div><div><strong>${risk || '—'}</strong></div>
         <div style="color:var(--text-muted);">Scenario</div><div><strong>${scen || '—'}</strong></div>
+        <div style="color:var(--text-muted);">Rollover type</div><div><strong>${document.getElementById('rollover-type') && document.getElementById('rollover-type').value ? document.getElementById('rollover-type').value + ' Rollover' : '<em style="font-style:normal;color:var(--text-soft);">not set (both paragraphs kept)</em>'}</strong></div>
         <div style="color:var(--text-muted);">Section toggles</div><div><strong>${flagsStr}</strong></div>
         <div style="color:var(--text-muted);">Goals to insert</div><div><strong>${goalCount} of 5</strong> (rest stay raw for adviser)</div>
         <div style="color:var(--text-muted);">Output</div><div>${docsToGenerate}</div>
@@ -732,6 +748,7 @@
     if (files.ofa) formData.append('ofa_template', files.ofa);
     formData.append('risk_profile', document.getElementById('risk-profile').value);
     formData.append('scenario',     document.getElementById('scenario').value);
+    formData.append('rollover_type',document.getElementById('rollover-type') ? document.getElementById('rollover-type').value : '');
     formData.append('no_insurance',   flags.no_insurance   ? 'true' : 'false');
     formData.append('no_trauma',      flags.no_trauma      ? 'true' : 'false');
     formData.append('no_salsac',      flags.no_salsac      ? 'true' : 'false');
