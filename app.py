@@ -224,7 +224,7 @@ def read_kyc_note(docx_bytes):
 def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
                      no_trauma_flag=False, no_salsac_flag=False,
                      insurance_only_flag=False, scenario="",
-                     goal_overrides=None):
+                     goal_overrides=None, rollover_type=""):
     """
     Read the Fact Finder xlsx and return:
         - data dict  { "{{CODE}}": "value" }
@@ -549,12 +549,33 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
     reference_date_str       = reference_date.strftime(DATE_FMT_LONG)
     arrangement_end_date_str = arrangement_end_date.strftime(DATE_FMT_LONG)
 
-    # ── Ongoing Advice Fee ({{zzz}}) ──
+    # ── Ongoing Advice Fee ({{zzz}} = annual, {{zzzMonthly}} = approx monthly) ──
     # 1.1% of total super balance, capped at $10,000 p.a.
     # Output is the bare number "X,XXX.XX" — the OFA template already has '$' before the placeholder.
+    # Monthly is the annual figure divided by 12 (approx — actual monthly deduction may vary).
     _total_super = sum_funds(94)
     _ongoing_fee = min(_total_super * 0.011, 10_000.0)
-    ongoing_fee_str = f"{_ongoing_fee:,.2f}" if _ongoing_fee > 0 else ""
+    _ongoing_fee_monthly = _ongoing_fee / 12 if _ongoing_fee > 0 else 0
+    ongoing_fee_str         = f"{_ongoing_fee:,.2f}"          if _ongoing_fee > 0 else ""
+    ongoing_fee_monthly_str = f"{_ongoing_fee_monthly:,.2f}"  if _ongoing_fee_monthly > 0 else ""
+
+    # ── Upfront Advice Fee — %ofSuperBalance breakdown (Pearl X v2.2 template) ──
+    # Total upfront fee = min($4,950, super balance × 3.3%). Below $150k it scales;
+    # above that it caps at $4,950.
+    # The percentage placeholders are sub-portions of that total fee:
+    #   {{100%ofSuperBalance}} = total upfront fee
+    #   {{45%ofSuperBalance}}  = 45% of total  (Advice preparation fee)
+    #   {{22.5%ofSuperBalance}}= 22.5% of total (Strategic AND Implementation — same value used twice)
+    #   {{10%ofSuperBalance}}  = 10% of total  (Licensee fee)
+    # Output bare numbers "X,XXX.XX" — template has '$' before the placeholder.
+    _upfront_fee_total = min(4_950.0, _total_super * 0.033) if _total_super > 0 else 0
+    if _upfront_fee_total > 0:
+        upfront_fee_100_str  = f"{_upfront_fee_total:,.2f}"
+        upfront_fee_45_str   = f"{_upfront_fee_total * 0.45:,.2f}"
+        upfront_fee_225_str  = f"{_upfront_fee_total * 0.225:,.2f}"
+        upfront_fee_10_str   = f"{_upfront_fee_total * 0.10:,.2f}"
+    else:
+        upfront_fee_100_str = upfront_fee_45_str = upfront_fee_225_str = upfront_fee_10_str = ""
 
     # ── Risk Profile (from UI selection) ──
     current_risk_profile = risk_profile  # passed in from form
@@ -603,7 +624,13 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
         "{{ Presentation date + 12 months}}":    reference_date_str,
         "{{ Reference date + 5 months}}":        arrangement_end_date_str,
         # OFA ongoing advice fee — 1.1% of total super balance, capped at $10,000 p.a.
-        "{{zzz}}":                               ongoing_fee_str,
+        "{{zzz}}":                               ongoing_fee_str,           # annual
+        "{{zzzMonthly}}":                        ongoing_fee_monthly_str,   # approx monthly = annual / 12
+        # Upfront advice fee breakdown — total = min($4,950, balance × 3.3%). See helper above.
+        "{{100%ofSuperBalance}}":                upfront_fee_100_str,       # total upfront fee
+        "{{45%ofSuperBalance}}":                 upfront_fee_45_str,        # advice preparation
+        "{{22.5%ofSuperBalance}}":               upfront_fee_225_str,       # strategic AND implementation
+        "{{10%ofSuperBalance}}":                 upfront_fee_10_str,        # licensee
         "{{AnnualisedSalarySacrificeAmount}}":   annualised_salary_sacrifice,
         "{{BindingDeathNominee}}":               binding_death_nominee,
         "{{CurrentRiskProfile}}":                current_risk_profile,
@@ -632,12 +659,16 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
         for c in FUND_COLS
     )
 
+    # Count of distinct super funds (non-empty values across row 92 fund-name columns).
+    # Used by {{DeleteIfOneSuperFund}} — only one fund means there's nothing to consolidate.
+    fund_count = sum(1 for c in FUND_COLS if cell(92, c))
+
     conditionals = {
         # True = DELETE this block
         "DeleteIfAgeGreaterThan55":              (age is not None and age >= 55),
         "DeleteIfAgeLessThan55":                 (age is not None and age < 55),
-        "DeleteIfBalanceBelow500k":              (total_balance < 500_000),
-        "DeleteIfSuperContributionsBelow30k":    (super_contribution_num < 30_000),
+        "DeleteIfBalanceBelow450k":              (total_balance < 450_000),
+        "DeleteIfSuperContributionsBelow27k":    (super_contribution_num < 27_000),
         "DeleteIfNoCurrentInsurance":            (not has_any_insurance),
         "DeleteIfNoInsuranceAtAll":              no_insurance_flag,        # legacy UI checkbox
         "DeleteIfNoInsuranceAdvice":             no_insurance_flag,        # new spec name, same checkbox
@@ -655,6 +686,12 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
         "DeleteIfNoDebts":                       (total_liabilities == 0),
         "DeleteIfClientHasDebts":                (total_liabilities > 0),
         "DeleteifNoCurrentUnderwrittenInsurance": (not has_underwritten),
+        # v2.2 new conditionals
+        "DeleteIfOneSuperFund":                  (fund_count == 1),
+        # Rollover dropdown (Step 2): "Full" / "Partial". Each conditional deletes the
+        # paragraph that doesn't match the adviser's selection.
+        "DeleteIfFullRollover":                  (rollover_type == "Partial"),
+        "DeleteIfPartialRollover":               (rollover_type == "Full"),
     }
 
     # Scenarios 1–6: keep selected, delete the other five.
@@ -718,8 +755,8 @@ UNMAPPED_CODES = {
 CONDITIONAL_PAIRS = [
     ("{{DeleteIfAgeGreaterThan55}}",              "{{EndDeleteIfAgeGreaterThan55}}",              "DeleteIfAgeGreaterThan55"),
     ("{{DeleteIfAgeLessThan55}}",                 "{{EndDeleteIfAgeLessThan55}}",                 "DeleteIfAgeLessThan55"),
-    ("{{DeleteIfBalanceBelow500k}}",              "{{EndDeleteIfBalanceBelow500k}}",              "DeleteIfBalanceBelow500k"),
-    ("{{DeleteIfSuperContributionsBelow30k}}",    "{{EndDeleteIfSuperContributionsBelow30k}}",    "DeleteIfSuperContributionsBelow30k"),
+    ("{{DeleteIfBalanceBelow450k}}",              "{{EndDeleteIfBalanceBelow450k}}",              "DeleteIfBalanceBelow450k"),
+    ("{{DeleteIfSuperContributionsBelow27k}}",    "{{EndDeleteIfSuperContributionsBelow27k}}",    "DeleteIfSuperContributionsBelow27k"),
     ("{{DeleteIfNoCurrentInsurance}}",            "{{EndDeleteIfNoCurrentInsurance}}",            "DeleteIfNoCurrentInsurance"),
     ("{{DeleteifNoCurrentUnderwrittenInsurance}}","{{EndDeleteifNoCurrentUnderwrittenInsurance}}","DeleteifNoCurrentUnderwrittenInsurance"),
     # New spec — driven by UI checkboxes
@@ -733,6 +770,10 @@ CONDITIONAL_PAIRS = [
     ("{{DeleteIfNoDebts}}",                       "{{EndDeleteIfNoDebts}}",                       "DeleteIfNoDebts"),
     ("{{DeleteIfClientHasDebts}}",                "{{EndDeleteIfClientHasDebts}}",                "DeleteIfClientHasDebts"),
     ("{{DeleteIfPersonalDeductibleContributions}}","{{EndDeleteIfPersonalDeductibleContributions}}","DeleteIfPersonalDeductibleContributions"),
+    # v2.2 new conditional pairs
+    ("{{DeleteIfOneSuperFund}}",                  "{{EndDeleteIfOneSuperFund}}",                  "DeleteIfOneSuperFund"),
+    ("{{DeleteIfFullRollover}}",                  "{{EndDeleteIfFullRollover}}",                  "DeleteIfFullRollover"),
+    ("{{DeleteIfPartialRollover}}",               "{{EndDeleteIfPartialRollover}}",               "DeleteIfPartialRollover"),
     # Scenario 1–6 — adviser picks one in the UI; the other five are deleted
     ("{{Scenario1}}", "{{EndScenario1}}", "DeleteScenario1"),
     ("{{Scenario2}}", "{{EndScenario2}}", "DeleteScenario2"),
@@ -1350,6 +1391,7 @@ def process():
 
         risk_profile   = request.form.get("risk_profile", "").strip()
         scenario       = request.form.get("scenario", "").strip()
+        rollover_type  = request.form.get("rollover_type", "").strip()   # "Full" / "Partial" / ""
         no_insurance   = request.form.get("no_insurance", "false").lower() == "true"
         no_trauma      = request.form.get("no_trauma", "false").lower() == "true"
         no_salsac      = request.form.get("no_salsac", "false").lower() == "true"
@@ -1388,6 +1430,7 @@ def process():
             insurance_only_flag=insurance_only,
             scenario=scenario,
             goal_overrides=goal_overrides,
+            rollover_type=rollover_type,
         )
         del ff_bytes
 
