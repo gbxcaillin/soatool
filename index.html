@@ -270,7 +270,7 @@
   <!-- ───────────── Step 1: Upload ───────────── -->
   <section class="step visible" id="step-1">
     <div class="step-title">Upload source files</div>
-    <div class="step-desc">Fact Finder and SOA Template are required. The KYC File Note pre-fills client goals and risk profile. The Ongoing Fee Agreement template, if provided, is generated alongside the SOA and the two are downloaded together as a zip. The Scenario Training Document supplies the prose/tables that get spliced in for the selected insurance scenario (1–7).</div>
+    <div class="step-desc">Fact Finder and SOA Template are required. The KYC File Note pre-fills client goals and risk profile. The Ongoing Fee Agreement template, if provided, is generated alongside the SOA and the two are downloaded together as a zip.</div>
 
     <div class="upload-grid">
 
@@ -336,22 +336,6 @@
         <div class="card-hint">Generated alongside the SOA · .docx</div>
         <div class="card-filename" id="ofa-name">—</div>
         <input type="file" id="input-ofa" accept=".docx" onchange="handleFile('ofa',this)">
-      </div>
-
-      <div class="upload-card optional" id="card-scenarios" onclick="triggerUpload('scenarios')"
-           ondragover="handleDrag(event,'scenarios')" ondragleave="clearDrag('scenarios')" ondrop="handleDrop(event,'scenarios')"
-           style="grid-column: 1 / -1;">
-        <button class="card-remove" onclick="removeFile(event,'scenarios')">×</button>
-        <svg class="card-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="4" y="3" width="22" height="30" rx="2" stroke="#F50D74" stroke-width="1.4" stroke-dasharray="3 2"/>
-          <path d="M8 9h6M8 13h10M8 17h8M8 21h12M8 25h7" stroke="#F50D74" stroke-width="1.4" stroke-linecap="round"/>
-          <path d="M22 27l3 3 5-5" stroke="#18A672" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <div class="card-type muted">Optional · One-off</div>
-        <div class="card-title">Scenario Training Document</div>
-        <div class="card-hint">Defines the content inserted at each Scenario marker (1a–7i, opt-in, advice-limitation) · .docx</div>
-        <div class="card-filename" id="scenarios-name">—</div>
-        <input type="file" id="input-scenarios" accept=".docx" onchange="handleFile('scenarios',this)">
       </div>
 
     </div>
@@ -515,7 +499,7 @@
 
 <script>
   // ── State ──
-  const files = { ff: null, soa: null, kyc: null, ofa: null, scenarios: null };
+  const files = { ff: null, soa: null, kyc: null, ofa: null };
   const flags = { no_insurance: false, no_trauma: false, no_salsac: false, insurance_only: false };
   let kycData = null;
   let currentStep = 1;
@@ -705,7 +689,6 @@
         <div style="color:var(--text-muted);">SOA Template</div><div><strong>${files.soa ? files.soa.name : '—'}</strong></div>
         <div style="color:var(--text-muted);">KYC Note</div><div><strong>${files.kyc ? files.kyc.name : notProvided}</strong></div>
         <div style="color:var(--text-muted);">OFA Template</div><div><strong>${files.ofa ? files.ofa.name : notProvided}</strong></div>
-        <div style="color:var(--text-muted);">Scenario Library</div><div><strong>${files.scenarios ? files.scenarios.name : notProvided}</strong></div>
         <div style="color:var(--text-muted);">Risk profile</div><div><strong>${risk || '—'}</strong></div>
         <div style="color:var(--text-muted);">Scenario</div><div><strong>${scen || '—'}</strong></div>
         <div style="color:var(--text-muted);">Rollover type</div><div><strong>${document.getElementById('rollover-type') && document.getElementById('rollover-type').value ? document.getElementById('rollover-type').value + ' Rollover' : '<em style="font-style:normal;color:var(--text-soft);">not set (both paragraphs kept)</em>'}</strong></div>
@@ -763,8 +746,7 @@
     const formData = new FormData();
     formData.append('fact_finder', files.ff);
     formData.append('soa_template', files.soa);
-    if (files.ofa)        formData.append('ofa_template',     files.ofa);
-    if (files.scenarios)  formData.append('scenario_library', files.scenarios);
+    if (files.ofa) formData.append('ofa_template', files.ofa);
     formData.append('risk_profile', document.getElementById('risk-profile').value);
     formData.append('scenario',     document.getElementById('scenario').value);
     formData.append('rollover_type',document.getElementById('rollover-type') ? document.getElementById('rollover-type').value : '');
