@@ -472,10 +472,16 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
     salary_sacrifice_raw = cell_data.get((35, 2))
     try:
         salary_sacrifice = f"${float(str(salary_sacrifice_raw).replace(',','').replace('$','')):,.0f}"
-        annualised_salary_sacrifice = salary_sacrifice
     except Exception:
         salary_sacrifice = ""
-        annualised_salary_sacrifice = ""
+
+    # Personal deductible contributions — FF B36 (separate from salary sacrifice in B35).
+    # Renamed from {{AnnualisedSalarySacrificeAmount}} (which read B35) to {{PersonalDeductibleContributions}}.
+    personal_deductible_contributions_raw = cell_data.get((36, 2))
+    try:
+        personal_deductible_contributions = f"${float(str(personal_deductible_contributions_raw).replace(',','').replace('$','')):,.0f}"
+    except Exception:
+        personal_deductible_contributions = ""
 
     # ── Retirement Age ──
     # Per spec: default to B8; use B9 only if B9 is non-empty AND differs from B8.
@@ -703,7 +709,7 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
         "{{45%ofSuperBalance}}":                 upfront_fee_45_str,        # advice preparation
         "{{22.5%ofSuperBalance}}":               upfront_fee_225_str,       # strategic AND implementation
         "{{10%ofSuperBalance}}":                 upfront_fee_10_str,        # licensee
-        "{{AnnualisedSalarySacrificeAmount}}":   annualised_salary_sacrifice,
+        "{{PersonalDeductibleContributions}}":   personal_deductible_contributions,   # FF B36 (was {{AnnualisedSalarySacrificeAmount}} reading B35)
         "{{BindingDeathNominee}}":               binding_death_nominee,
         "{{CurrentRiskProfile}}":                current_risk_profile,
         "{{EmploymentStatus}}":                  emp_status,
