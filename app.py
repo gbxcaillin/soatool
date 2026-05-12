@@ -218,6 +218,78 @@ def read_kyc_note(docx_bytes):
 
 
 # ─────────────────────────────────────────────
+# SCENARIO TRAINING DOCUMENT (LIBRARY) READER
+# ─────────────────────────────────────────────
+
+# Markers we recognise inside the training document and the SOA template.
+# Matches: {{ScenarioNa}} … {{ScenarioNi}}, {{ScenarioNoptIn}}, {{ScenarioNAdviceLimitation}}.
+SCENARIO_MARKER_RE = re.compile(
+    r'\{\{Scenario([1-7])(?:([a-z])|(optIn|AdviceLimitation))\}\}'
+)
+
+def _get_para_text(el):
+    """Concatenated text of all <w:t> children inside a body element (paragraph or table)."""
+    return "".join(t.text or "" for t in el.iter(qn('w:t')))
+
+
+def read_scenario_library(docx_bytes):
+    """
+    Parse the Scenario Training .docx into a dict of marker -> [body XML elements].
+
+    Each scenario marker in the training doc is followed by the content that should be
+    spliced into the SOA template at that marker location. Content runs until the next
+    scenario marker (or end of doc). Content includes paragraphs, tables, lists,
+    formatting, and any nested {{codes}} (which get resolved by the later find-and-replace
+    pass once spliced into the SOA template).
+
+    Returns: dict { '{{Scenario1a}}': [<w:p>, <w:tbl>, ...], ... }
+    """
+    from docx import Document as _DocxDocument
+    doc = _DocxDocument(io.BytesIO(docx_bytes))
+    body = doc.element.body
+
+    library = {}
+    current_marker = None
+    current_elements = []
+
+    # Matches non-marker section headings like "Scenario - (1) - Has group insurance...".
+    # These divide the training doc into sections but aren't content to insert.
+    SECTION_DIVIDER_RE = re.compile(r'^\s*Scenario\s*-\s*\(\s*[1-7]\s*\)\s*-', re.IGNORECASE)
+
+    for el in list(body):
+        tag = el.tag.split('}')[-1] if '}' in el.tag else el.tag
+        if tag == 'sectPr':
+            continue
+        text = _get_para_text(el) if tag in ('p', 'tbl') else ""
+        # Section divider — close out the current marker; the divider itself is not content
+        if tag == 'p' and SECTION_DIVIDER_RE.match(text):
+            if current_marker:
+                library[current_marker] = current_elements
+            current_marker = None
+            current_elements = []
+            continue
+        m = SCENARIO_MARKER_RE.search(text) if tag == 'p' else None
+        if m:
+            if current_marker:
+                # If the same marker appears twice (template typo), last write wins
+                # — flag in logs but proceed.
+                if m.group() in library:
+                    # Restore previous; will be overwritten below
+                    pass
+                library[current_marker] = current_elements
+            current_marker = m.group()
+            current_elements = []
+            continue
+        if current_marker:
+            current_elements.append(el)
+
+    if current_marker:
+        library[current_marker] = current_elements
+
+    return library
+
+
+# ─────────────────────────────────────────────
 # FACT FINDER READER
 # ─────────────────────────────────────────────
 
@@ -696,7 +768,7 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
 
     # Scenarios 1–6: keep selected, delete the other five.
     # If no scenario selected, all six are kept (markers stripped).
-    for n in range(1, 7):
+    for n in range(1, 8):
         conditionals[f"DeleteScenario{n}"] = (scenario != "" and scenario != str(n))
 
     # ── Goal overrides from KYC note ──
@@ -781,6 +853,7 @@ CONDITIONAL_PAIRS = [
     ("{{Scenario4}}", "{{EndScenario4}}", "DeleteScenario4"),
     ("{{Scenario5}}", "{{EndScenario5}}", "DeleteScenario5"),
     ("{{Scenario6}}", "{{EndScenario6}}", "DeleteScenario6"),
+    ("{{Scenario7}}", "{{EndScenario7}}", "DeleteScenario7"),
 ]
 
 # For DeleteIfNoInsuranceAtAll — single tag (no end tag), marks start of section to delete
@@ -1020,7 +1093,67 @@ def apply_conditional_deletions(doc, conditionals):
             pass
 
 
-def process_soa(template_bytes, data, conditionals):
+def insert_scenario_content(doc, library, scenario_num):
+    """
+    Walk the SOA template body. For every paragraph that contains a scenario marker:
+      - If the marker's scenario number matches `scenario_num`, splice the library's
+        content for that marker into the document in place of the marker paragraph
+        (deep-copied so the library is reusable).
+      - Otherwise, remove the marker paragraph.
+
+    Handles ScenarioNa..ScenarioNi, ScenarioNoptIn, ScenarioNAdviceLimitation.
+    A no-op if `library` is empty or `scenario_num` is empty.
+    """
+    if not library or not scenario_num:
+        return
+    target = str(scenario_num)
+
+    body = doc.element.body
+    # Snapshot to avoid mutation-during-iteration issues
+    for el in list(body):
+        tag = el.tag.split('}')[-1] if '}' in el.tag else el.tag
+        if tag != 'p':
+            continue
+        text = _get_para_text(el)
+        m = SCENARIO_MARKER_RE.search(text)
+        if not m:
+            continue
+
+        marker_scenario = m.group(1)   # '1'..'7'
+        marker_full     = m.group()    # e.g. '{{Scenario1a}}'
+
+        parent = el.getparent()
+        if parent is None:
+            continue
+
+        if marker_scenario == target:
+            # Insert library content in place of the marker paragraph.
+            # Whitespace-only content (e.g. Scenario 5 "NA" placeholders that are just
+            # empty paragraphs in the training doc) is treated as empty — the marker is
+            # stripped without leaving a blank line behind. Tables always count as real
+            # content even if their cell text is empty.
+            content = library.get(marker_full, [])
+            def _has_real_content(elements):
+                for src in elements:
+                    tag = src.tag.split('}')[-1] if '}' in src.tag else src.tag
+                    if tag == 'tbl':
+                        return True
+                    if tag == 'p' and _get_para_text(src).strip():
+                        return True
+                return False
+            if _has_real_content(content):
+                idx = list(parent).index(el)
+                for i, src_el in enumerate(content):
+                    new_el = copy.deepcopy(src_el)
+                    parent.insert(idx + 1 + i, new_el)
+            # Remove the marker paragraph itself
+            parent.remove(el)
+        else:
+            # Non-matching scenario marker — strip the paragraph
+            parent.remove(el)
+
+
+def process_soa(template_bytes, data, conditionals, scenario_library=None, scenario_num=""):
     """Main processor — returns completed docx as bytes."""
     import gc
 
@@ -1037,6 +1170,12 @@ def process_soa(template_bytes, data, conditionals):
 
     # Step 1: Apply conditional block deletions
     apply_conditional_deletions(doc, conditionals)
+
+    # Step 1b: Splice scenario content from the training-doc library (if supplied).
+    # Runs BEFORE find-and-replace so embedded codes in the inserted content
+    # ({{ClientFullName}}, {{RecommendedInsurer}}, etc.) get resolved in Step 2.
+    if scenario_library and scenario_num:
+        insert_scenario_content(doc, scenario_library, scenario_num)
 
     # Step 2: Replace codes in body paragraphs
     for paragraph in doc.paragraphs:
@@ -1411,8 +1550,8 @@ def process():
             return jsonify({"error": "Risk profile must be selected"}), 400
         if not scenario:
             return jsonify({"error": "Scenario must be selected"}), 400
-        if scenario not in {"1", "2", "3", "4", "5", "6"}:
-            return jsonify({"error": "Scenario must be 1-6"}), 400
+        if scenario not in {"1", "2", "3", "4", "5", "6", "7"}:
+            return jsonify({"error": "Scenario must be 1-7"}), 400
 
         ff_bytes       = request.files["fact_finder"].read()
         template_bytes = request.files["soa_template"].read()
@@ -1421,6 +1560,15 @@ def process():
         ofa_bytes = None
         if "ofa_template" in request.files and request.files["ofa_template"].filename:
             ofa_bytes = request.files["ofa_template"].read()
+
+        # Scenario training document — optional. If supplied, parse into a marker -> content
+        # library and pass to process_soa, which splices the content in place of the
+        # selected scenario's markers (Scenario1a..7i + optIn + AdviceLimitation).
+        scenario_library = None
+        if "scenario_library" in request.files and request.files["scenario_library"].filename:
+            sl_bytes = request.files["scenario_library"].read()
+            scenario_library = read_scenario_library(sl_bytes)
+            del sl_bytes
 
         # Read fact finder then free its bytes
         data, conditionals = read_fact_finder(
@@ -1442,13 +1590,15 @@ def process():
         DOCX_MIME   = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
         # Generate the SOA (template_bytes is freed inside process_soa)
-        soa_out = process_soa(template_bytes, data, conditionals)
+        soa_out = process_soa(template_bytes, data, conditionals,
+                              scenario_library=scenario_library, scenario_num=scenario)
 
         if ofa_bytes is None:
             # Single-file response — preserves the legacy behavior.
             return send_file(soa_out, as_attachment=True, download_name=soa_name, mimetype=DOCX_MIME)
 
         # Both templates supplied: process the OFA as well, then zip both.
+        # OFA template doesn't have scenario markers — scenario library is irrelevant there.
         ofa_out = process_soa(ofa_bytes, data, conditionals)
         zip_buf = io.BytesIO()
         with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
