@@ -1126,17 +1126,29 @@ def apply_conditional_deletions(doc, conditionals):
 def insert_scenario_content(doc, library, scenario_num):
     """
     Walk the SOA template body. For every paragraph that contains a scenario marker:
-      - If the marker's scenario number matches `scenario_num`, splice the library's
-        content for that marker into the document in place of the marker paragraph
-        (deep-copied so the library is reusable).
-      - Otherwise, remove the marker paragraph.
+      - Non-matching scenarios' markers → always removed (clean up unused content).
+      - Matching scenario's markers:
+          * If library has real content for the marker → splice it in, remove marker.
+          * If library is provided but the marker is empty / whitespace-only → strip marker cleanly.
+          * If no library at all → leave the marker raw so the adviser knows where to fill in.
 
     Handles ScenarioNa..ScenarioNi, ScenarioNoptIn, ScenarioNAdviceLimitation.
-    A no-op if `library` is empty or `scenario_num` is empty.
+    A no-op only if `scenario_num` is empty.
     """
-    if not library or not scenario_num:
+    if not scenario_num:
         return
     target = str(scenario_num)
+    have_library = bool(library)
+    library = library or {}
+
+    def _has_real_content(elements):
+        for src in elements:
+            t = src.tag.split('}')[-1] if '}' in src.tag else src.tag
+            if t == 'tbl':
+                return True
+            if t == 'p' and _get_para_text(src).strip():
+                return True
+        return False
 
     body = doc.element.body
     # Snapshot to avoid mutation-during-iteration issues
@@ -1157,29 +1169,20 @@ def insert_scenario_content(doc, library, scenario_num):
             continue
 
         if marker_scenario == target:
-            # Insert library content in place of the marker paragraph.
-            # Whitespace-only content (e.g. Scenario 5 "NA" placeholders that are just
-            # empty paragraphs in the training doc) is treated as empty — the marker is
-            # stripped without leaving a blank line behind. Tables always count as real
-            # content even if their cell text is empty.
             content = library.get(marker_full, [])
-            def _has_real_content(elements):
-                for src in elements:
-                    tag = src.tag.split('}')[-1] if '}' in src.tag else src.tag
-                    if tag == 'tbl':
-                        return True
-                    if tag == 'p' and _get_para_text(src).strip():
-                        return True
-                return False
             if _has_real_content(content):
+                # Library has real content for this marker — splice it in, remove marker
                 idx = list(parent).index(el)
                 for i, src_el in enumerate(content):
-                    new_el = copy.deepcopy(src_el)
-                    parent.insert(idx + 1 + i, new_el)
-            # Remove the marker paragraph itself
-            parent.remove(el)
+                    parent.insert(idx + 1 + i, copy.deepcopy(src_el))
+                parent.remove(el)
+            elif have_library:
+                # Library uploaded but this marker is empty (e.g. Scenario 5 "NA")
+                # — strip the marker so the output is clean
+                parent.remove(el)
+            # else: no library uploaded → leave marker raw so adviser fills it in
         else:
-            # Non-matching scenario marker — strip the paragraph
+            # Non-matching scenario marker — always strip
             parent.remove(el)
 
 
@@ -1201,10 +1204,11 @@ def process_soa(template_bytes, data, conditionals, scenario_library=None, scena
     # Step 1: Apply conditional block deletions
     apply_conditional_deletions(doc, conditionals)
 
-    # Step 1b: Splice scenario content from the training-doc library (if supplied).
-    # Runs BEFORE find-and-replace so embedded codes in the inserted content
-    # ({{ClientFullName}}, {{RecommendedInsurer}}, etc.) get resolved in Step 2.
-    if scenario_library and scenario_num:
+    # Step 1b: Splice scenario content from the training-doc library (if supplied)
+    # AND strip non-matching scenarios' markers. Runs even without a library so the
+    # unused scenarios' markers don't pollute the output. Runs BEFORE find-and-replace
+    # so embedded codes in any inserted content get resolved in Step 2.
+    if scenario_num:
         insert_scenario_content(doc, scenario_library, scenario_num)
 
     # Step 2: Replace codes in body paragraphs
