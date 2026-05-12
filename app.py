@@ -289,6 +289,27 @@ def read_scenario_library(docx_bytes):
     return library
 
 
+def _load_bundled_scenario_library():
+    """
+    Load the bundled scenario_library.docx that ships alongside app.py — used as the
+    default library when the adviser doesn't upload one via the UI. Returns None if
+    the file is absent or fails to parse (the agent will then operate with no library
+    and leave the selected scenario's markers raw).
+    """
+    try:
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scenario_library.docx")
+        if os.path.exists(path):
+            with open(path, "rb") as f:
+                return read_scenario_library(f.read())
+    except Exception:
+        pass
+    return None
+
+
+# Loaded once at process startup. Re-deploy to pick up a new scenario_library.docx.
+DEFAULT_SCENARIO_LIBRARY = _load_bundled_scenario_library()
+
+
 # ─────────────────────────────────────────────
 # FACT FINDER READER
 # ─────────────────────────────────────────────
@@ -1595,10 +1616,11 @@ def process():
         if "ofa_template" in request.files and request.files["ofa_template"].filename:
             ofa_bytes = request.files["ofa_template"].read()
 
-        # Scenario training document — optional. If supplied, parse into a marker -> content
-        # library and pass to process_soa, which splices the content in place of the
-        # selected scenario's markers (Scenario1a..7i + optIn + AdviceLimitation).
-        scenario_library = None
+        # Scenario library — starts from the bundled default (scenario_library.docx that
+        # ships alongside app.py). If the adviser uploads a different one via the UI,
+        # that overrides for this request only. The default is what advisers will use
+        # most of the time — no need to re-upload the firm-wide training doc per client.
+        scenario_library = DEFAULT_SCENARIO_LIBRARY
         if "scenario_library" in request.files and request.files["scenario_library"].filename:
             sl_bytes = request.files["scenario_library"].read()
             scenario_library = read_scenario_library(sl_bytes)
