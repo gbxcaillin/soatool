@@ -483,6 +483,13 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
     except Exception:
         personal_deductible_contributions = ""
 
+    # Non-concessional contributions — FF B37. New for the v2.2 template.
+    non_concessional_contributions_raw = cell_data.get((37, 2))
+    try:
+        non_concessional_contributions = f"${float(str(non_concessional_contributions_raw).replace(',','').replace('$','')):,.0f}"
+    except Exception:
+        non_concessional_contributions = ""
+
     # ── Retirement Age ──
     # Per spec: default to B8; use B9 only if B9 is non-empty AND differs from B8.
     # cell() returns "" for both blank and numeric 0, so the simple check covers both.
@@ -518,25 +525,37 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
     other_asset1_val = currency(79, 2)
     personal_loan1_val = currency(81, 2)
 
-    # Total assets
-    total_assets = 0
-    for r, c in [(73,2),(76,2),(79,2)]:
-        v = cell_data.get((r, c))
+    # Helper: add cell value as float to a running total, skipping bad/empty values.
+    def _add_cell_to_total(running_total, row, col):
+        v = cell_data.get((row, col))
         try:
-            total_assets += float(str(v).replace(",","").replace("$",""))
+            return running_total + float(str(v).replace(",", "").replace("$", ""))
         except Exception:
-            pass
-    # Add super balances
-    total_assets += sum_funds(94)
+            return running_total
+
+    # Total assets — per v2.2 Code Map:
+    #   B71  (cash / liquid assets)
+    #   B73  (primary residence)
+    #   row 76 across fund cols B/D/F/H/J  (investment property values)
+    #   row 79 across fund cols B/D/F/H/J  (other asset values)
+    # NOTE: super balances (sum of row 94) are NOT included in TotalAssetValue.
+    total_assets = 0
+    total_assets = _add_cell_to_total(total_assets, 71, 2)
+    total_assets = _add_cell_to_total(total_assets, 73, 2)
+    for c in FUND_COLS:
+        total_assets = _add_cell_to_total(total_assets, 76, c)
+        total_assets = _add_cell_to_total(total_assets, 79, c)
     total_assets_str = f"${total_assets:,.0f}" if total_assets else ""
 
+    # Total liabilities — per v2.2 Code Map:
+    #   B74  (primary residence debt)
+    #   row 77 across fund cols B/D/F/H/J  (investment property debts)
+    #   row 81 across fund cols B/D/F/H/J  (personal loans)
     total_liabilities = 0
-    for r, c in [(74,2),(77,2),(81,2)]:
-        v = cell_data.get((r, c))
-        try:
-            total_liabilities += float(str(v).replace(",","").replace("$",""))
-        except Exception:
-            pass
+    total_liabilities = _add_cell_to_total(total_liabilities, 74, 2)
+    for c in FUND_COLS:
+        total_liabilities = _add_cell_to_total(total_liabilities, 77, c)
+        total_liabilities = _add_cell_to_total(total_liabilities, 81, c)
     total_liabilities_str = f"${total_liabilities:,.0f}" if total_liabilities else ""
 
     # ── Super Funds ──
@@ -710,6 +729,7 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
         "{{22.5%ofSuperBalance}}":               upfront_fee_225_str,       # strategic AND implementation
         "{{10%ofSuperBalance}}":                 upfront_fee_10_str,        # licensee
         "{{PersonalDeductibleContributions}}":   personal_deductible_contributions,   # FF B36 (was {{AnnualisedSalarySacrificeAmount}} reading B35)
+        "{{NonConcessionalContributions}}":      non_concessional_contributions,      # FF B37 — new for v2.2
         "{{BindingDeathNominee}}":               binding_death_nominee,
         "{{CurrentRiskProfile}}":                current_risk_profile,
         "{{EmploymentStatus}}":                  emp_status,
@@ -766,10 +786,14 @@ def read_fact_finder(xlsx_bytes, risk_profile, no_insurance_flag,
         "DeleteifNoCurrentUnderwrittenInsurance": (not has_underwritten),
         # v2.2 new conditionals
         "DeleteIfOneSuperFund":                  (fund_count == 1),
-        # Rollover dropdown (Step 2): "Full" / "Partial". Each conditional deletes the
-        # paragraph that doesn't match the adviser's selection.
-        "DeleteIfFullRollover":                  (rollover_type == "Partial"),
-        "DeleteIfPartialRollover":               (rollover_type == "Full"),
+        # Rollover dropdown (Step 2): "Full" / "Partial". Each conditional's name reads
+        # as "delete THIS block IF doing the named rollover type".
+        # The DeleteIfFullRollover marker wraps the PARTIAL rollover prose; we want to
+        # delete the partial prose when the adviser picks Full → True when "Full".
+        # The DeleteIfPartialRollover marker wraps the FULL rollover prose; we want to
+        # delete the full prose when the adviser picks Partial → True when "Partial".
+        "DeleteIfFullRollover":                  (rollover_type == "Full"),
+        "DeleteIfPartialRollover":               (rollover_type == "Partial"),
     }
 
     # Scenarios 1–6: keep selected, delete the other five.
