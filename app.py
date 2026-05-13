@@ -1222,15 +1222,19 @@ def process_soa(template_bytes, data, conditionals, scenario_library=None, scena
     # unmapped set so it gets replaced rather than left raw.
     runtime_unmapped = UNMAPPED_CODES - {k for k, v in data.items() if v}
 
-    # Step 1: Apply conditional block deletions
-    apply_conditional_deletions(doc, conditionals)
-
-    # Step 1b: Splice scenario content from the training-doc library (if supplied)
-    # AND strip non-matching scenarios' markers. Runs even without a library so the
-    # unused scenarios' markers don't pollute the output. Runs BEFORE find-and-replace
-    # so embedded codes in any inserted content get resolved in Step 2.
+    # Step 1: Splice scenario content from the bundled library FIRST.
+    # This brings in any conditional markers ({{DeleteIfNoScopedTrauma}} etc.) that
+    # live inside scenario sub-blocks so the conditional pass below can see and
+    # process them. Runs even without a library — unused scenarios' markers are
+    # stripped so they don't pollute the output.
     if scenario_num:
         insert_scenario_content(doc, scenario_library, scenario_num)
+
+    # Step 1b: Apply ALL conditional block deletions across the fully-spliced document.
+    # Process is: add everything in first (Step 1), then prune unwanted content last.
+    # This means every DeleteIf* marker is processed regardless of whether it lived
+    # at the top level of the template or was injected via scenario content.
+    apply_conditional_deletions(doc, conditionals)
 
     # Step 2: Replace codes in body paragraphs
     for paragraph in doc.paragraphs:
